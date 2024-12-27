@@ -1,0 +1,18 @@
+{
+    "tools": [
+        "go@1.23.4",
+        "powershell"
+    ],
+    "flows": {
+        "test": [
+            "[powershell] -C 'Running tests'",
+            "[go] test",
+            "[powershell] -C 'Tests completed'"
+        ],
+        "build": [
+            "foo",
+            "bar",
+            "baz"
+        ]
+    }
+}
