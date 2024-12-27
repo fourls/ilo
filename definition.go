@@ -51,50 +51,64 @@ func parseToolRef(value string, out *ToolRef) error {
 
 func parseArgsString(line string, out *[]string) error {
 	const (
-		InNone = iota
-		InUnescaped
-		InSingleQuote
-		InDoubleQuote
+		None = iota
+		Literal
+		SingleQuoted
+		DoubleQuoted
 	)
 
-	var inState = InNone
+	// We want to create the args array regardless of whether there are actually any args
+	*out = make([]string, 0)
+
+	var argType = None
 	var start = 0
 
 	var setStart = func(index int, state int) {
 		start = index
-		inState = state
+		argType = state
 	}
 
 	var setEnd = func(index int) {
-		inState = InNone
+		argType = None
 		*out = append(*out, line[start:index])
 	}
 
 	for i, char := range line {
-		switch {
-		case char == '\'' && inState == InNone:
-			setStart(i+1, InSingleQuote)
-		case char == '"' && inState == InNone:
-			setStart(i+1, InDoubleQuote)
-		case char == '\'' && inState == InSingleQuote:
+		if argType == None {
+			switch {
+			case char == '\'':
+				setStart(i+1, SingleQuoted)
+			case char == '"':
+				setStart(i+1, DoubleQuoted)
+			case !unicode.IsSpace(char):
+				setStart(i, Literal)
+			}
+		} else if argType == Literal {
+			switch {
+			case char == '\'':
+				setEnd(i)
+				setStart(i+1, SingleQuoted)
+			case char == '"':
+				setEnd(i)
+				setStart(i+1, DoubleQuoted)
+			case unicode.IsSpace(char):
+				setEnd(i)
+			}
+		} else if argType == SingleQuoted && char == '\'' {
 			setEnd(i)
-		case char == '"' && inState == InDoubleQuote:
+		} else if argType == DoubleQuoted && char == '"' {
 			setEnd(i)
-		case unicode.IsSpace(char) && inState == InUnescaped:
-			setEnd(i)
-		case !unicode.IsSpace(char) && inState == InNone:
-			setStart(i, InUnescaped)
 		}
 	}
 
-	switch inState {
-	case InUnescaped:
+	if argType == Literal {
 		setEnd(len(line))
+	}
+
+	if argType != None {
+		return errors.New("unterminated string literal")
+	} else {
 		return nil
-	case InNone:
-		return nil
-	default:
-		return errors.New("unterminated string literal in flow step")
 	}
 }
 

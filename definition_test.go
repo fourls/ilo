@@ -31,24 +31,45 @@ func TestParseToolRef(t *testing.T) {
 }
 
 func TestParseArgsString(t *testing.T) {
-	var expectedArgs []string = []string{
-		"foo",
-		"bar",
-		"baz \"bonk\" flarp",
-		"blinky's",
-		"bonk",
+	var tests = []struct {
+		input    string
+		expected []string
+	}{
+		{
+			`foo bar 'baz "bonk" flarp' "blinky's" bonk`,
+			[]string{
+				"foo",
+				"bar",
+				"baz \"bonk\" flarp",
+				"blinky's",
+				"bonk",
+			},
+		},
+		{
+			`foo's bar'`,
+			[]string{
+				"foo",
+				"s bar",
+			},
+		},
+		{
+			``,
+			[]string{},
+		},
 	}
 
-	var line = "foo bar 'baz \"bonk\" flarp' \"blinky's\" bonk"
-	var args []string
-	var err = parseArgsString(line, &args)
+	for _, tc := range tests {
+		var args []string
+		var err = parseArgsString(tc.input, &args)
 
-	if err != nil || !reflect.DeepEqual(args, expectedArgs) {
-		t.Fatalf(
-			"got: %s, %v, want: %s, nil",
-			args,
-			err,
-			expectedArgs,
-		)
+		if err != nil || (!reflect.DeepEqual(args, tc.expected)) {
+			t.Fatalf(
+				"got: %s, %v, want: %s, nil",
+				args,
+				err,
+				tc.expected,
+			)
+		}
 	}
+
 }
