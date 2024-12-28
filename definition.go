@@ -128,11 +128,13 @@ func ParseProjDef(bytes []byte) (*ProjDef, error) {
 	// Parse flows
 	var flows = make([]FlowDef, len(data.Flows))
 	var flowIndex = 0
-	for key, value := range data.Flows {
+	for flowName, flowCmds := range data.Flows {
 		var flow = &flows[flowIndex]
-		flow.Name = key
 
-		for i, line := range value {
+		flow.Name = flowName
+		flow.Steps = make([]FlowStep, len(flowCmds))
+
+		for i, line := range flowCmds {
 			parseArgsString(line, &flow.Steps[i].Args)
 		}
 		flowIndex++
@@ -140,5 +142,6 @@ func ParseProjDef(bytes []byte) (*ProjDef, error) {
 
 	return &ProjDef{
 		Tools: tools,
+		Flows: flows,
 	}, nil
 }

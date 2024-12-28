@@ -5,9 +5,9 @@
     ],
     "flows": {
         "test": [
-            "[powershell] -C 'Running tests'",
-            "[go] test",
-            "[powershell] -C 'Tests completed'"
+            "powershell -C 'echo \"Running tests\"'",
+            "go test",
+            "powershell -C 'echo \"Tests completed\"'"
         ],
         "build": [
             "foo",

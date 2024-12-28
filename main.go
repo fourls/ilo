@@ -15,7 +15,8 @@ func main() {
 		panic(err)
 	}
 
-	for _, tool := range data.Tools {
-		println("Requires", tool.Name, "version", tool.Version)
+	for i, flow := range data.Flows {
+		println("Running flow", i)
+		RunFlow(flow)
 	}
 }
