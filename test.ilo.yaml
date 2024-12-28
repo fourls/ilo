@@ -1,0 +1,17 @@
+flows:
+  test:
+    - echo: Start tests
+    - run: bash -c 'echo "Starting tests at $(date)"'
+    - run: go test
+    - run: bash -c 'echo "Finishing tests at $(date)"'
+    - echo: Finishing tests
+  build:
+    - echo: Build start
+    - run: bash -c 'echo "Starting build at $(date)"'
+    - run: go version
+    - run: bash -c 'echo "Finishing build at $(date)"'
+    - echo: Build end
+  broken:
+    - echo: This flow will exit with status code 1
+    - run: bash -c 'exit 1'
+    - echo: This step should never be reached

@@ -1,10 +1,11 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"strings"
 	"unicode"
+
+	"gopkg.in/yaml.v3"
 )
 
 type ToolRef struct {
@@ -13,7 +14,8 @@ type ToolRef struct {
 }
 
 type FlowStep struct {
-	Args []string
+	Run  []string
+	Echo string
 }
 
 type FlowDef struct {
@@ -22,13 +24,54 @@ type FlowDef struct {
 }
 
 type ProjDef struct {
-	Tools []ToolRef
 	Flows []FlowDef
 }
 
 type JsonProjDef struct {
 	Tools []string
 	Flows map[string][]string
+}
+
+type YamlStepDef struct {
+	Echo string
+	Run  string
+}
+
+type YamlProjDef struct {
+	Flows map[string][]YamlStepDef
+}
+
+func parseYamlProjDef(data []byte) (*ProjDef, error) {
+	var yml YamlProjDef
+	var err = yaml.Unmarshal(data, &yml)
+	if err != nil {
+		return nil, err
+	}
+
+	var flows = make([]FlowDef, len(yml.Flows))
+	var flowIndex = 0
+	for flowName, flowCmds := range yml.Flows {
+		var flow = &flows[flowIndex]
+
+		flow.Name = flowName
+		flow.Steps = make([]FlowStep, len(flowCmds))
+
+		for i, line := range flowCmds {
+			if line.Run != "" && line.Echo != "" {
+				return nil, errors.New("flow step contains both run: and echo: commands")
+			}
+
+			switch {
+			case line.Run != "":
+				parseArgsString(line.Run, &flow.Steps[i].Run)
+			case line.Echo != "":
+				flow.Steps[i].Echo = line.Echo
+			}
+		}
+		flowIndex++
+	}
+
+	return &ProjDef{Flows: flows}, nil
 }
 
 func parseToolRef(value string, out *ToolRef) error {
@@ -110,38 +153,4 @@ func parseArgsString(line string, out *[]string) error {
 	} else {
 		return nil
 	}
-}
-
-func ParseProjDef(bytes []byte) (*ProjDef, error) {
-	var data JsonProjDef
-	var err = json.Unmarshal(bytes, &data)
-	if err != nil {
-		return nil, err
-	}
-
-	// Parse tools
-	tools := make([]ToolRef, len(data.Tools))
-	for i, str := range data.Tools {
-		parseToolRef(str, &tools[i])
-	}
-
-	// Parse flows
-	var flows = make([]FlowDef, len(data.Flows))
-	var flowIndex = 0
-	for flowName, flowCmds := range data.Flows {
-		var flow = &flows[flowIndex]
-
-		flow.Name = flowName
-		flow.Steps = make([]FlowStep, len(flowCmds))
-
-		for i, line := range flowCmds {
-			parseArgsString(line, &flow.Steps[i].Args)
-		}
-		flowIndex++
-	}
-
-	return &ProjDef{
-		Tools: tools,
-		Flows: flows,
-	}, nil
 }

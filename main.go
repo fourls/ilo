@@ -5,18 +5,17 @@ import (
 )
 
 func main() {
-	file_contents, err := os.ReadFile("test.ilo.json")
+	file_contents, err := os.ReadFile("test.ilo.yaml")
 	if err != nil {
 		panic(err)
 	}
 
-	data, err := ParseProjDef(file_contents)
+	data, err := parseYamlProjDef(file_contents)
 	if err != nil {
 		panic(err)
 	}
 
-	for i, flow := range data.Flows {
-		println("Running flow", i)
+	for _, flow := range data.Flows {
 		RunFlow(flow)
 	}
 }
