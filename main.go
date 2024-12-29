@@ -10,7 +10,7 @@ func main() {
 		panic(err)
 	}
 
-	data, err := parseYamlProjDef(file_contents)
+	data, err := ParseYamlProjDef(file_contents)
 	if err != nil {
 		panic(err)
 	}

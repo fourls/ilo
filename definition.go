@@ -2,16 +2,10 @@ package main
 
 import (
 	"errors"
-	"strings"
 	"unicode"
 
 	"gopkg.in/yaml.v3"
 )
-
-type ToolRef struct {
-	Name    string
-	Version string
-}
 
 type FlowStep struct {
 	Run  []string
@@ -27,11 +21,6 @@ type ProjDef struct {
 	Flows []FlowDef
 }
 
-type JsonProjDef struct {
-	Tools []string
-	Flows map[string][]string
-}
-
 type YamlStepDef struct {
 	Echo string
 	Run  string
@@ -41,7 +30,7 @@ type YamlProjDef struct {
 	Flows map[string][]YamlStepDef
 }
 
-func parseYamlProjDef(data []byte) (*ProjDef, error) {
+func ParseYamlProjDef(data []byte) (*ProjDef, error) {
 	var yml YamlProjDef
 	var err = yaml.Unmarshal(data, &yml)
 	if err != nil {
@@ -72,24 +61,6 @@ func parseYamlProjDef(data []byte) (*ProjDef, error) {
 	}
 
 	return &ProjDef{Flows: flows}, nil
-}
-
-func parseToolRef(value string, out *ToolRef) error {
-	split := strings.Split(value, "@")
-
-	if len(split) == 0 || len(split) > 2 {
-		return errors.New("Invalid tool reference " + value)
-	}
-
-	toolName := split[0]
-	var version string
-
-	if len(split) == 2 {
-		version = split[1]
-	}
-
-	*out = ToolRef{Name: toolName, Version: version}
-	return nil
 }
 
 func parseArgsString(line string, out *[]string) error {
