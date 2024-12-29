@@ -51,7 +51,7 @@ func main() {
 
 	toolbox, err := GetToolbox()
 	if err != nil {
-		panic(err)
+		println("Error parsing tools.json: " + err.Error())
 	}
 
 	for _, flow := range project.Flows {
