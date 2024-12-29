@@ -1,21 +1,57 @@
 package main
 
 import (
+	"flag"
+	"log"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
+func printHeader(name string, path string) {
+	var log = log.New(os.Stdout, "", 0)
+	log.Printf(`╔%s╗`, strings.Repeat("═", 50))
+	log.Printf("║ ▒▒ %-45s ║\n", name)
+	log.Printf(`╟%s╢`, strings.Repeat("─", 50))
+	log.Printf("║ %-48s ║\n", path)
+	log.Printf(`╚%s╝`, strings.Repeat("═", 50))
+}
+
 func main() {
-	file_contents, err := os.ReadFile("test.ilo.yaml")
+	var wd, _ = os.Getwd()
+
+	var path = flag.String("file", wd, "path to project definition file")
+	var chosenFlow = flag.String("flow", "*", "name of flow to run")
+	flag.Parse()
+
+	var stat, _ = os.Stat(*path)
+	if stat.IsDir() {
+		*path = filepath.Join(*path, "ilo.yml")
+	}
+
+	if !filepath.IsAbs(*path) {
+		var err error
+		*path, err = filepath.Abs(*path)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	file_contents, err := os.ReadFile(*path)
 	if err != nil {
 		panic(err)
 	}
 
-	data, err := ParseYamlProjDef(file_contents)
+	project, err := ParseYamlProjDef(file_contents)
 	if err != nil {
 		panic(err)
 	}
 
-	for _, flow := range data.Flows {
-		ExecuteFlow(flow)
+	printHeader(project.Name, *path)
+
+	for _, flow := range project.Flows {
+		if *chosenFlow == "*" || flow.Name == *chosenFlow {
+			ExecuteFlow(flow)
+		}
 	}
 }

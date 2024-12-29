@@ -18,7 +18,8 @@ type FlowDef struct {
 }
 
 type ProjDef struct {
-	Flows []FlowDef
+	Name  string
+	Flows map[string]FlowDef
 }
 
 type YamlStepDef struct {
@@ -27,6 +28,7 @@ type YamlStepDef struct {
 }
 
 type YamlProjDef struct {
+	Name  string
 	Flows map[string][]YamlStepDef
 }
 
@@ -37,10 +39,10 @@ func ParseYamlProjDef(data []byte) (*ProjDef, error) {
 		return nil, err
 	}
 
-	var flows = make([]FlowDef, len(yml.Flows))
-	var flowIndex = 0
+	var flows = make(map[string]FlowDef, len(yml.Flows))
+
 	for flowName, flowCmds := range yml.Flows {
-		var flow = &flows[flowIndex]
+		var flow FlowDef
 
 		flow.Name = flowName
 		flow.Steps = make([]FlowStepDef, len(flowCmds))
@@ -57,10 +59,11 @@ func ParseYamlProjDef(data []byte) (*ProjDef, error) {
 				flow.Steps[i].Echo = line.Echo
 			}
 		}
-		flowIndex++
+
+		flows[flowName] = flow
 	}
 
-	return &ProjDef{Flows: flows}, nil
+	return &ProjDef{Name: yml.Name, Flows: flows}, nil
 }
 
 func parseArgsString(line string, out *[]string) error {

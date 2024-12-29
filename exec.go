@@ -35,8 +35,6 @@ func (s runStepExecutor) execute(params execParams) error {
 
 	if len(out) > 0 {
 		printLines(string(out), params.Logger)
-	} else {
-		params.Logger.Println()
 	}
 
 	return err
@@ -63,11 +61,11 @@ func buildExecutor(step FlowStepDef) (executor, error) {
 
 func logFlowFinish(logger *log.Logger, prefix string, status string) {
 	logger.SetPrefix(prefix)
-	logger.Printf("END (%s)\n", status)
+	logger.Println(status)
 }
 
 func ExecuteFlow(flow FlowDef) error {
-	var basePrefix = fmt.Sprintf("[%s] ", flow.Name)
+	var basePrefix = fmt.Sprintf("%s.", flow.Name)
 
 	var logger = log.New(os.Stdout, basePrefix, 0)
 	logger.Println("BEGIN")
@@ -83,7 +81,7 @@ func ExecuteFlow(flow FlowDef) error {
 
 		var executor, err = buildExecutor(step)
 		if err != nil {
-			logFlowFinish(logger, basePrefix, fmt.Sprintf("ERROR parsing step %d: %s", i, err))
+			logFlowFinish(logger, basePrefix, fmt.Sprintf("ERROR: parsing step %d: %s", i, err))
 			return err
 		}
 

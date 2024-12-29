@@ -24,7 +24,7 @@ flows:
 		t.Fatalf("got: %d flows, want: 2 flows", len(def.Flows))
 	}
 
-	var flow = def.Flows[0]
+	var flow = def.Flows["foo"]
 	if flow.Name != "foo" || len(flow.Steps) != 3 {
 		t.Fatalf("got: %d steps in flow, want: 3 steps in flow", len(flow.Steps))
 	}

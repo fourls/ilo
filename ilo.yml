@@ -1,14 +1,17 @@
+name: Ilo
 flows:
   test:
     - echo: Tests starting
     - run: go test
     - echo: Tests done
   build:
-    - echo: Build start
-    - run: bash -c 'echo "Starting build at $(date)"'
+    - run: go build
+  sample:
+    - echo: sample start
+    - run: bash -c 'echo "Starting sample at $(date)"'
     - run: go version
-    - run: bash -c 'echo "Finishing build at $(date)"'
-    - echo: Build end
+    - run: bash -c 'echo "Finishing sample at $(date)"'
+    - echo: sample end
   broken:
     - echo: This flow will exit with status code 1
     - run: bash -c 'exit 1'
