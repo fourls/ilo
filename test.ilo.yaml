@@ -1,10 +1,8 @@
 flows:
   test:
-    - echo: Start tests
-    - run: bash -c 'echo "Starting tests at $(date)"'
+    - echo: Tests starting
     - run: go test
-    - run: bash -c 'echo "Finishing tests at $(date)"'
-    - echo: Finishing tests
+    - echo: Tests done
   build:
     - echo: Build start
     - run: bash -c 'echo "Starting build at $(date)"'

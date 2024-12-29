@@ -7,14 +7,14 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type FlowStep struct {
+type FlowStepDef struct {
 	Run  []string
 	Echo string
 }
 
 type FlowDef struct {
 	Name  string
-	Steps []FlowStep
+	Steps []FlowStepDef
 }
 
 type ProjDef struct {
@@ -43,7 +43,7 @@ func ParseYamlProjDef(data []byte) (*ProjDef, error) {
 		var flow = &flows[flowIndex]
 
 		flow.Name = flowName
-		flow.Steps = make([]FlowStep, len(flowCmds))
+		flow.Steps = make([]FlowStepDef, len(flowCmds))
 
 		for i, line := range flowCmds {
 			if line.Run != "" && line.Echo != "" {

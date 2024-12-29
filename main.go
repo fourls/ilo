@@ -16,6 +16,6 @@ func main() {
 	}
 
 	for _, flow := range data.Flows {
-		RunFlow(flow)
+		ExecuteFlow(flow)
 	}
 }

@@ -29,13 +29,13 @@ flows:
 		t.Fatalf("got: %d steps in flow, want: 3 steps in flow", len(flow.Steps))
 	}
 
-	var expectedStep = FlowStep{Echo: "Starting foo"}
+	var expectedStep = FlowStepDef{Echo: "Starting foo"}
 
 	if !reflect.DeepEqual(flow.Steps[0], expectedStep) {
 		t.Fatalf("got: %s, want: %s", flow.Steps[0], expectedStep)
 	}
 
-	expectedStep = FlowStep{Run: []string{"cmd", "-abc", "this is a foo text"}}
+	expectedStep = FlowStepDef{Run: []string{"cmd", "-abc", "this is a foo text"}}
 
 	if !reflect.DeepEqual(flow.Steps[1], expectedStep) {
 		t.Fatalf("got: %s, want: %s", flow.Steps[1], expectedStep)
