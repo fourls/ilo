@@ -49,9 +49,14 @@ func main() {
 
 	printHeader(project.Name, *path)
 
+	toolbox, err := GetToolbox()
+	if err != nil {
+		panic(err)
+	}
+
 	for _, flow := range project.Flows {
 		if *chosenFlow == "*" || flow.Name == *chosenFlow {
-			ExecuteFlow(flow)
+			ExecuteFlow(flow, *toolbox)
 		}
 	}
 }

@@ -2,17 +2,18 @@ name: Ilo
 flows:
   test:
     - echo: Tests starting
-    - run: go test
+    - run: $go test
     - echo: Tests done
   build:
-    - run: go build
+    - run: $go build
   sample:
     - echo: sample start
-    - run: bash -c 'echo "Starting sample at $(date)"'
-    - run: go version
-    - run: bash -c 'echo "Finishing sample at $(date)"'
+    - run: $bash -c 'echo "Starting sample for $(whoami)"'
+    - run: $bash -c whoami
+    - run: $go version
+    - run: $bash -c 'echo "Finishing sample for $(whoami)"'
     - echo: sample end
   broken:
     - echo: This flow will exit with status code 1
-    - run: bash -c 'exit 1'
+    - run: $bash -c 'exit 1'
     - echo: This step should never be reached

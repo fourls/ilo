@@ -19,6 +19,7 @@ type execParams struct {
 	Env       []string
 	Directory string
 	Logger    *log.Logger
+	Toolbox   Toolbox
 }
 
 type executor interface {
@@ -30,7 +31,21 @@ type runStepExecutor struct {
 }
 
 func (s runStepExecutor) execute(params execParams) error {
-	var cmd = exec.Command(s.Args[0], s.Args[1:]...)
+	var firstArg = s.Args[0]
+	if strings.HasPrefix(firstArg, "$") {
+		var info, exists = params.Toolbox.Tools[firstArg[1:]]
+		if exists {
+			firstArg = info.Path
+		} else {
+			return errors.New("no tool found for substitution " + firstArg)
+		}
+	}
+
+	var cmd = exec.Command(firstArg, s.Args[1:]...)
+
+	cmd.Env = params.Env
+	cmd.Dir = params.Directory
+
 	var out, err = cmd.Output()
 
 	if len(out) > 0 {
@@ -64,7 +79,7 @@ func logFlowFinish(logger *log.Logger, prefix string, status string) {
 	logger.Println(status)
 }
 
-func ExecuteFlow(flow FlowDef) error {
+func ExecuteFlow(flow FlowDef, toolbox Toolbox) error {
 	var basePrefix = fmt.Sprintf("%s.", flow.Name)
 
 	var logger = log.New(os.Stdout, basePrefix, 0)
@@ -89,6 +104,7 @@ func ExecuteFlow(flow FlowDef) error {
 			Env:       baseEnv,
 			Directory: defaultDir,
 			Logger:    logger,
+			Toolbox:   toolbox,
 		})
 
 		if err != nil {
