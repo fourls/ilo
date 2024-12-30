@@ -14,22 +14,22 @@ func printLines(text string, println func(string)) {
 	}
 }
 
-type execParams struct {
+type ExecParams struct {
 	Env       []string
 	Directory string
 	Observer  ExecutionObserver
 	Toolbox   Toolbox
 }
 
-type executor interface {
-	execute(params execParams) error
+type StepExecutor interface {
+	StepExecute(params ExecParams) error
 }
 
 type runStepExecutor struct {
 	def RunFlowStep
 }
 
-func (s runStepExecutor) execute(params execParams) error {
+func (s runStepExecutor) StepExecute(params ExecParams) error {
 	args := s.def.Args()
 	if len(args) < 1 {
 		return errors.New("execute run step: no arguments provided")
@@ -63,12 +63,12 @@ type echoStepExecutor struct {
 	def EchoFlowStep
 }
 
-func (s echoStepExecutor) execute(params execParams) error {
+func (s echoStepExecutor) StepExecute(params ExecParams) error {
 	printLines(s.def.Message(), params.Observer.StepOutput)
 	return nil
 }
 
-func buildExecutor(step FlowStep) executor {
+func BuildDefaultExecutor(step FlowStep) StepExecutor {
 	switch step.StepType() {
 	case StepEchoMessage:
 		return echoStepExecutor{step.(EchoFlowStep)}
@@ -104,7 +104,7 @@ type ExecutionObserver interface {
 	StepFailed(err error)
 }
 
-func (e ProjectExecutor) runStep(flow FlowDef, index int, params execParams) error {
+func (e ProjectExecutor) runStep(flow FlowDef, index int, params ExecParams, buildExecutor func(FlowStep) StepExecutor) error {
 	var err error
 	defer func() {
 		if err != nil {
@@ -123,7 +123,7 @@ func (e ProjectExecutor) runStep(flow FlowDef, index int, params execParams) err
 		}
 	}
 
-	err = executor.execute(params)
+	err = executor.StepExecute(params)
 	if err != nil {
 		return FlowExecutionError{
 			FlowName: flow.Name,
@@ -134,7 +134,11 @@ func (e ProjectExecutor) runStep(flow FlowDef, index int, params execParams) err
 	return nil
 }
 
-func (e ProjectExecutor) RunFlow(name string, observer ExecutionObserver) (bool, error) {
+func (e ProjectExecutor) RunFlow(
+	name string,
+	observer ExecutionObserver,
+	buildExecutor func(FlowStep) StepExecutor,
+) (bool, error) {
 	flow, ok := e.Definition.Flows[name]
 	if !ok {
 		return false, FlowExecutionError{
@@ -145,7 +149,7 @@ func (e ProjectExecutor) RunFlow(name string, observer ExecutionObserver) (bool,
 
 	observer.FlowEntered(&flow)
 
-	baseParams := execParams{
+	baseParams := ExecParams{
 		Env:       os.Environ(),
 		Directory: e.Definition.Dir,
 		Observer:  observer,
@@ -156,7 +160,7 @@ func (e ProjectExecutor) RunFlow(name string, observer ExecutionObserver) (bool,
 
 	for i := range flow.Steps {
 		observer.StepEntered(&flow.Steps[i])
-		err := e.runStep(flow, i, baseParams)
+		err := e.runStep(flow, i, baseParams, buildExecutor)
 
 		if err != nil {
 			observer.StepFailed(err)

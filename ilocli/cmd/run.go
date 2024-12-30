@@ -52,7 +52,7 @@ func runCmdImpl(cmd *cobra.Command, args []string) error {
 	observer := display.NewObserver(project, log)
 
 	for _, flowName := range args {
-		_, err := executor.RunFlow(flowName, &observer)
+		_, err := executor.RunFlow(flowName, &observer, ilolib.BuildDefaultExecutor)
 		if err != nil {
 			log.Println(err)
 		}
