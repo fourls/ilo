@@ -2,6 +2,7 @@ package ilolib
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -102,8 +103,15 @@ func getConfigFilePath() (string, error) {
 }
 
 func NewToolbox(path string) (Toolbox, error) {
-	var toolbox = Toolbox{path: path}
-	return toolbox, toolbox.Load()
+	var toolbox = Toolbox{path: path, tools: make(map[string]ToolInfo)}
+
+	err := toolbox.Load()
+	if errors.Is(err, os.ErrNotExist) {
+		// the file not existing is fine, we can just create it
+		return toolbox, toolbox.Save()
+	} else {
+		return toolbox, err
+	}
 }
 
 func NewProdToolbox() (*Toolbox, error) {
