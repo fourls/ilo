@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"fourls.dev/ilo/ilocli/display"
 	"fourls.dev/ilo/ilolib"
 	"github.com/spf13/cobra"
 )
@@ -48,8 +49,10 @@ func runCmdImpl(cmd *cobra.Command, args []string) error {
 		Toolbox:    *toolbox,
 	}
 
+	observer := display.NewObserver(project, log)
+
 	for _, flowName := range args {
-		_, err := executor.RunFlow(flowName, log)
+		_, err := executor.RunFlow(flowName, &observer)
 		if err != nil {
 			log.Println(err)
 		}

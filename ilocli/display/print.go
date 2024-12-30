@@ -1,4 +1,4 @@
-package ilolib
+package display
 
 import (
 	"fmt"

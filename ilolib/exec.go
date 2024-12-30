@@ -3,23 +3,21 @@ package ilolib
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
-	"time"
 )
 
-func printLines(text string, logger *log.Logger) {
+func printLines(text string, println func(string)) {
 	for _, line := range strings.Split(strings.TrimRight(text, "\r\n"), "\n") {
-		logger.Println(strings.TrimRight(line, "\r"))
+		println(strings.TrimRight(line, "\r"))
 	}
 }
 
 type execParams struct {
 	Env       []string
 	Directory string
-	Logger    *log.Logger
+	Observer  ExecutionObserver
 	Toolbox   Toolbox
 }
 
@@ -55,7 +53,7 @@ func (s runStepExecutor) execute(params execParams) error {
 	var out, err = cmd.Output()
 
 	if len(out) > 0 {
-		printLines(string(out), params.Logger)
+		printLines(string(out), params.Observer.StepOutput)
 	}
 
 	return err
@@ -66,7 +64,7 @@ type echoStepExecutor struct {
 }
 
 func (s echoStepExecutor) execute(params execParams) error {
-	printLines(s.def.Message(), params.Logger)
+	printLines(s.def.Message(), params.Observer.StepOutput)
 	return nil
 }
 
@@ -95,13 +93,26 @@ func (e FlowExecutionError) Error() string {
 	return fmt.Sprintf("execute flow '%s': %s", e.FlowName, e.Message)
 }
 
+type ExecutionObserver interface {
+	FlowEntered(f *FlowDef)
+	FlowPassed()
+	FlowFailed()
+
+	StepEntered(s *FlowStep)
+	StepOutput(text string)
+	StepPassed()
+	StepFailed(err error)
+}
+
 func (e ProjectExecutor) runStep(flow FlowDef, index int, params execParams) error {
 	var err error
 	defer func() {
 		if err != nil {
-			params.Logger.Println("ERROR: " + err.Error())
+			params.Observer.StepFailed(err)
 		}
 	}()
+
+	params.Observer.StepEntered(&flow.Steps[index])
 
 	executor := buildExecutor(flow.Steps[index])
 	if executor == nil {
@@ -123,7 +134,7 @@ func (e ProjectExecutor) runStep(flow FlowDef, index int, params execParams) err
 	return nil
 }
 
-func (e ProjectExecutor) RunFlow(name string, log *log.Logger) (bool, error) {
+func (e ProjectExecutor) RunFlow(name string, observer ExecutionObserver) (bool, error) {
 	flow, ok := e.Definition.Flows[name]
 	if !ok {
 		return false, FlowExecutionError{
@@ -132,40 +143,35 @@ func (e ProjectExecutor) RunFlow(name string, log *log.Logger) (bool, error) {
 		}
 	}
 
-	flowId := fmt.Sprintf("%s / %s", e.Definition.Name, flow.Name)
-
-	HorizontalRule{Header: flowId}.Print(log)
-
-	timeStarted := time.Now()
+	observer.FlowEntered(&flow)
 
 	baseParams := execParams{
 		Env:       os.Environ(),
 		Directory: e.Definition.Dir,
-		Logger:    log,
+		Observer:  observer,
 		Toolbox:   e.Toolbox,
 	}
 
 	success := true
 
 	for i := range flow.Steps {
+		observer.StepEntered(&flow.Steps[i])
 		err := e.runStep(flow, i, baseParams)
 
 		if err != nil {
+			observer.StepFailed(err)
 			success = false
 			break
+		} else {
+			observer.StepPassed()
 		}
 	}
 
-	duration := time.Since(timeStarted).Round(time.Millisecond)
-
-	var status string
 	if success {
-		status = fmt.Sprintf("PASSED in %s", duration)
+		observer.FlowPassed()
 	} else {
-		status = fmt.Sprintf("FAILED after %s", duration)
+		observer.FlowFailed()
 	}
-
-	HorizontalRule{Footer: status}.Print(log)
 
 	return success, nil
 }
