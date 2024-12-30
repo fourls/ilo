@@ -58,14 +58,13 @@ func runCmdImpl(cmd *cobra.Command, args []string) error {
 
 	printHeader(project.Name, projectPath)
 
-	toolbox, err := ilolib.GetToolbox()
-	if err != nil {
-		println("Error parsing tools.json: " + err.Error())
-	}
+	toolbox, _ := ilolib.GetToolbox()
 
 	for _, flow := range project.Flows {
 		if len(args) == 0 || slices.Contains(args, flow.Name) {
-			ilolib.ExecuteFlow(flow, *toolbox)
+			if err = ilolib.ExecuteFlow(flow, *toolbox); err != nil {
+				return err
+			}
 		}
 	}
 
