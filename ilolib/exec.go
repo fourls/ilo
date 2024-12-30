@@ -106,13 +106,6 @@ type ExecutionObserver interface {
 }
 
 func (e ProjectExecutor) runStep(flow FlowDef, index int, params ExecParams, buildExecutor func(FlowStep) StepExecutor) error {
-	var err error
-	defer func() {
-		if err != nil {
-			params.Observer.StepFailed(err)
-		}
-	}()
-
 	executor := buildExecutor(flow.Steps[index])
 	if executor == nil {
 		// Unknown step type
@@ -122,7 +115,7 @@ func (e ProjectExecutor) runStep(flow FlowDef, index int, params ExecParams, bui
 		}
 	}
 
-	err = executor.StepExecute(params)
+	err := executor.StepExecute(params)
 	if err != nil {
 		return FlowExecutionError{
 			FlowName: flow.Name,
