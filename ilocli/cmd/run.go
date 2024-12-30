@@ -58,7 +58,7 @@ func runCmdImpl(cmd *cobra.Command, args []string) error {
 
 	printHeader(project.Name, projectPath)
 
-	toolbox, _ := ilolib.GetToolbox()
+	toolbox, _ := ilolib.NewProdToolbox()
 
 	for _, flow := range project.Flows {
 		if len(args) == 0 || slices.Contains(args, flow.Name) {
