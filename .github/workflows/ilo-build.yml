@@ -21,6 +21,11 @@ jobs:
     - name: Build Ilo
       run: go install ./ilocli
 
+    - name: Register Tools
+      run: |
+        ilocli tool add go
+        ilocli tool add bash
+
     - name: Build
       run: ilocli run build
 

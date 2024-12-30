@@ -25,13 +25,20 @@ func getConfigPath() (string, error) {
 	return configPath, os.MkdirAll(configPath, os.ModePerm)
 }
 
-func GetToolbox() (*Toolbox, error) {
+func getConfigFilePath() (string, error) {
 	configPath, err := getConfigPath()
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(configPath, "toolbox.json"), nil
+}
+
+func GetToolbox() (*Toolbox, error) {
+	var configFilePath, err = getConfigFilePath()
 	if err != nil {
 		return &Toolbox{}, err
 	}
-
-	var configFilePath = filepath.Join(configPath, "toolbox.json")
 
 	data, err := os.ReadFile(configFilePath)
 	if err != nil {
@@ -45,4 +52,18 @@ func GetToolbox() (*Toolbox, error) {
 	}
 
 	return &toolbox, nil
+}
+
+func UpdateToolbox(toolbox *Toolbox) error {
+	var configFilePath, err = getConfigFilePath()
+	if err != nil {
+		return err
+	}
+
+	data, err := json.MarshalIndent(*toolbox, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(configFilePath, data, os.ModePerm)
 }
