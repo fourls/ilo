@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"fourls.dev/ilo/ilolib"
 )
 
 func printHeader(name string, path string) {
@@ -42,21 +44,21 @@ func main() {
 		panic(err)
 	}
 
-	project, err := ParseYamlProjDef(file_contents)
+	project, err := ilolib.ParseYamlProjDef(file_contents)
 	if err != nil {
 		panic(err)
 	}
 
 	printHeader(project.Name, *path)
 
-	toolbox, err := GetToolbox()
+	toolbox, err := ilolib.GetToolbox()
 	if err != nil {
 		println("Error parsing tools.json: " + err.Error())
 	}
 
 	for _, flow := range project.Flows {
 		if *chosenFlow == "*" || flow.Name == *chosenFlow {
-			ExecuteFlow(flow, *toolbox)
+			ilolib.ExecuteFlow(flow, *toolbox)
 		}
 	}
 }

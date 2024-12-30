@@ -1,4 +1,4 @@
-module fourls.dev/ilocli
+module fourls.dev/ilo
 
 go 1.23.4
 

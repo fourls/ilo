@@ -2,10 +2,10 @@ name: Ilo
 flows:
   test:
     - echo: Tests starting
-    - run: $go test
+    - run: $go test ./...
     - echo: Tests done
   build:
-    - run: $go build
+    - run: $go build ./...
   sample:
     - echo: sample start
     - run: $bash -c 'echo "Starting sample for $(whoami)"'
