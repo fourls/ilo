@@ -50,6 +50,7 @@ func (s runStepExecutor) StepExecute(params ExecParams) error {
 	cmd.Env = params.Env
 	cmd.Dir = params.Directory
 
+	// todo read stderr
 	var out, err = cmd.Output()
 
 	if len(out) > 0 {
