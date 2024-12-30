@@ -112,8 +112,6 @@ func (e ProjectExecutor) runStep(flow FlowDef, index int, params ExecParams, bui
 		}
 	}()
 
-	params.Observer.StepEntered(&flow.Steps[index])
-
 	executor := buildExecutor(flow.Steps[index])
 	if executor == nil {
 		// Unknown step type
