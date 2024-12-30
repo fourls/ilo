@@ -14,10 +14,7 @@ var cmdToolAdd = &cobra.Command{
 }
 
 func cmdToolAddImpl(cmd *cobra.Command, args []string) error {
-	toolbox, err := ilolib.GetToolbox()
-	if err != nil {
-		return err
-	}
+	toolbox, _ := ilolib.GetToolbox()
 
 	for _, toolName := range args {
 		path := which.Which(toolName)
