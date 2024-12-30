@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 )
 
 func printLines(text string, logger *log.Logger) {
@@ -74,45 +75,95 @@ func buildExecutor(step FlowStepDef) (executor, error) {
 	}
 }
 
-func logFlowFinish(logger *log.Logger, prefix string, status string) {
-	logger.SetPrefix(prefix)
-	logger.Println(status)
+type ProjectExecutor struct {
+	Definition ProjectDefinition
+	Toolbox    Toolbox
 }
 
-func ExecuteFlow(flow FlowDef, toolbox Toolbox) error {
-	var basePrefix = fmt.Sprintf("%s.", flow.Name)
+type FlowExecutionError struct {
+	FlowName string
+	Message  string
+}
 
-	var logger = log.New(os.Stdout, basePrefix, 0)
-	logger.Println("BEGIN")
+func (e FlowExecutionError) Error() string {
+	return fmt.Sprintf("execute flow '%s': %s", e.FlowName, e.Message)
+}
 
-	var baseEnv = os.Environ()
-	var defaultDir, err = os.Getwd()
+func (e ProjectExecutor) runStep(flow FlowDef, index int, params execParams) error {
+	var err error
+	defer func() {
+		if err != nil {
+			params.Logger.Println("ERROR: " + err.Error())
+		}
+	}()
+
+	executor, err := buildExecutor(flow.Steps[index])
 	if err != nil {
-		return err
-	}
-
-	for i, step := range flow.Steps {
-		logger.SetPrefix(fmt.Sprintf("%s%d: ", basePrefix, i))
-
-		var executor, err = buildExecutor(step)
-		if err != nil {
-			logFlowFinish(logger, basePrefix, fmt.Sprintf("ERROR: parsing step %d: %s", i, err))
-			return err
-		}
-
-		err = executor.execute(execParams{
-			Env:       baseEnv,
-			Directory: defaultDir,
-			Logger:    logger,
-			Toolbox:   toolbox,
-		})
-
-		if err != nil {
-			logFlowFinish(logger, basePrefix, fmt.Sprintf("FAIL at step %d: %s", i, err))
-			return err
+		return FlowExecutionError{
+			flow.Name,
+			fmt.Sprintf("step %d could not be parsed", index),
 		}
 	}
 
-	logFlowFinish(logger, basePrefix, "PASS")
+	err = executor.execute(params)
+	if err != nil {
+		return FlowExecutionError{
+			FlowName: flow.Name,
+			Message:  fmt.Sprintf("step %d failed: %v", index, err),
+		}
+	}
+
 	return nil
+}
+
+func (e ProjectExecutor) RunFlow(name string, log *log.Logger) (bool, error) {
+	flow, ok := e.Definition.Flows[name]
+	if !ok {
+		return false, FlowExecutionError{
+			name,
+			"flow does not exist",
+		}
+	}
+
+	InfoBox{
+		[]string{"▒▒ " + e.Definition.Name, e.Definition.Path},
+		[]string{fmt.Sprintf("Running '%s'", flow.Name)},
+	}.Print(log)
+
+	timeStarted := time.Now()
+
+	baseParams := execParams{
+		Env:       os.Environ(),
+		Directory: e.Definition.Dir,
+		Logger:    log,
+		Toolbox:   e.Toolbox,
+	}
+
+	success := true
+
+	for i := range flow.Steps {
+		if i > 0 {
+			HorizontalRule{Suffix: fmt.Sprintf(":%d", i)}.Print(log)
+		}
+		err := e.runStep(flow, i, baseParams)
+
+		if err != nil {
+			success = false
+			break
+		}
+	}
+
+	duration := time.Since(timeStarted)
+
+	if success {
+		InfoBox{
+			[]string{fmt.Sprintf("'%s' PASSED in %s", flow.Name, duration)},
+		}.Print(log)
+	} else {
+		InfoBox{
+			[]string{fmt.Sprintf("'%s' FAILED after %s", flow.Name, duration)},
+		}.Print(log)
+	}
+
+	return success, nil
 }

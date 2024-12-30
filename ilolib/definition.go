@@ -2,6 +2,8 @@ package ilolib
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
 	"unicode"
 
 	"gopkg.in/yaml.v3"
@@ -17,8 +19,10 @@ type FlowDef struct {
 	Steps []FlowStepDef
 }
 
-type ProjDef struct {
+type ProjectDefinition struct {
 	Name  string
+	Path  string
+	Dir   string
 	Flows map[string]FlowDef
 }
 
@@ -32,14 +36,32 @@ type YamlProjDef struct {
 	Flows map[string][]YamlStepDef
 }
 
-func ParseYamlProjDef(data []byte) (*ProjDef, error) {
-	var yml YamlProjDef
-	var err = yaml.Unmarshal(data, &yml)
+func ReadProjectDefinition(path string) (*ProjectDefinition, error) {
+	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	var flows = make(map[string]FlowDef, len(yml.Flows))
+	project := ProjectDefinition{
+		Path: path,
+		Dir:  filepath.Dir(path),
+	}
+
+	err = parseProjectDefinitionYaml(bytes, &project)
+	if err != nil {
+		return nil, err
+	}
+	return &project, nil
+}
+
+func parseProjectDefinitionYaml(data []byte, project *ProjectDefinition) error {
+	var yml YamlProjDef
+	if err := yaml.Unmarshal(data, &yml); err != nil {
+		return err
+	}
+
+	project.Name = yml.Name
+	project.Flows = make(map[string]FlowDef, len(yml.Flows))
 
 	for flowName, flowCmds := range yml.Flows {
 		var flow FlowDef
@@ -49,7 +71,7 @@ func ParseYamlProjDef(data []byte) (*ProjDef, error) {
 
 		for i, line := range flowCmds {
 			if line.Run != "" && line.Echo != "" {
-				return nil, errors.New("flow step contains both run: and echo: commands")
+				return errors.New("flow step contains both run: and echo: commands")
 			}
 
 			switch {
@@ -60,10 +82,10 @@ func ParseYamlProjDef(data []byte) (*ProjDef, error) {
 			}
 		}
 
-		flows[flowName] = flow
+		project.Flows[flowName] = flow
 	}
 
-	return &ProjDef{Name: yml.Name, Flows: flows}, nil
+	return nil
 }
 
 func parseArgsString(line string, out *[]string) error {

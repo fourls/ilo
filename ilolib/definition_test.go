@@ -15,8 +15,8 @@ flows:
   bar:
     - echo: Doing "bar" now`)
 
-	var def, err = ParseYamlProjDef(data)
-	if err != nil {
+	var def ProjectDefinition
+	if err := parseProjectDefinitionYaml(data, &def); err != nil {
 		t.Fatalf("got: %v, want: nil", err)
 	}
 
