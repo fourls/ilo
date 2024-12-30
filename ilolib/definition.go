@@ -2,6 +2,7 @@ package ilolib
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"unicode"
@@ -9,14 +10,50 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type FlowStepDef struct {
-	Run  []string
-	Echo string
+type FlowStep interface {
+	StepType() StepType
+}
+
+type RunFlowStep interface {
+	Args() []string
+}
+
+type EchoFlowStep interface {
+	Message() string
+}
+
+type StepType int
+
+const (
+	StepRunProgram StepType = iota
+	StepEchoMessage
+)
+
+type flowStep struct {
+	text     string
+	args     []string
+	stepType StepType
+}
+
+func (s flowStep) StepType() StepType {
+	return s.stepType
+}
+
+func (s flowStep) Args() []string {
+	return s.args
+}
+
+func (s flowStep) Message() string {
+	return s.text
+}
+
+func (s flowStep) String() string {
+	return s.text
 }
 
 type FlowDef struct {
 	Name  string
-	Steps []FlowStepDef
+	Steps []FlowStep
 }
 
 type ProjectDefinition struct {
@@ -67,19 +104,32 @@ func parseProjectDefinitionYaml(data []byte, project *ProjectDefinition) error {
 		var flow FlowDef
 
 		flow.Name = flowName
-		flow.Steps = make([]FlowStepDef, len(flowCmds))
+		flow.Steps = make([]FlowStep, len(flowCmds))
 
 		for i, line := range flowCmds {
-			if line.Run != "" && line.Echo != "" {
-				return errors.New("flow step contains both run: and echo: commands")
+			var stepType StepType
+			switch {
+			case line.Run != "" && line.Echo == "":
+				stepType = StepRunProgram
+			case line.Run == "" && line.Echo != "":
+				stepType = StepEchoMessage
+			default:
+				return fmt.Errorf("parse '%s' step %d: invalid type", flowName, i)
 			}
 
-			switch {
-			case line.Run != "":
-				parseArgsString(line.Run, &flow.Steps[i].Run)
-			case line.Echo != "":
-				flow.Steps[i].Echo = line.Echo
+			step := flowStep{
+				stepType: stepType,
 			}
+
+			switch step.stepType {
+			case StepRunProgram:
+				step.text = line.Run
+				parseArgsString(step.text, &step.args)
+			case StepEchoMessage:
+				step.text = line.Echo
+			}
+
+			flow.Steps[i] = step
 		}
 
 		project.Flows[flowName] = flow

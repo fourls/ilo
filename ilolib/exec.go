@@ -28,21 +28,26 @@ type executor interface {
 }
 
 type runStepExecutor struct {
-	Args []string
+	def RunFlowStep
 }
 
 func (s runStepExecutor) execute(params execParams) error {
-	var firstArg = s.Args[0]
+	args := s.def.Args()
+	if len(args) < 1 {
+		return errors.New("execute run step: no arguments provided")
+	}
+
+	firstArg := args[0]
 	if strings.HasPrefix(firstArg, "$") {
 		var info, exists = params.Toolbox.Get(firstArg[1:])
 		if exists {
 			firstArg = info.Path
 		} else {
-			return errors.New("no tool found for substitution " + firstArg)
+			return errors.New("execute run step: no tool found for substitution " + firstArg)
 		}
 	}
 
-	var cmd = exec.Command(firstArg, s.Args[1:]...)
+	var cmd = exec.Command(firstArg, args[1:]...)
 
 	cmd.Env = params.Env
 	cmd.Dir = params.Directory
@@ -57,21 +62,22 @@ func (s runStepExecutor) execute(params execParams) error {
 }
 
 type echoStepExecutor struct {
-	Message string
+	def EchoFlowStep
 }
 
 func (s echoStepExecutor) execute(params execParams) error {
-	printLines(s.Message, params.Logger)
+	printLines(s.def.Message(), params.Logger)
 	return nil
 }
 
-func buildExecutor(step FlowStepDef) (executor, error) {
-	if step.Echo != "" {
-		return echoStepExecutor{step.Echo}, nil
-	} else if len(step.Run) > 0 {
-		return runStepExecutor{step.Run}, nil
-	} else {
-		return nil, errors.New("invalid step")
+func buildExecutor(step FlowStep) executor {
+	switch step.StepType() {
+	case StepEchoMessage:
+		return echoStepExecutor{step.(EchoFlowStep)}
+	case StepRunProgram:
+		return runStepExecutor{step.(RunFlowStep)}
+	default:
+		return nil
 	}
 }
 
@@ -97,11 +103,12 @@ func (e ProjectExecutor) runStep(flow FlowDef, index int, params execParams) err
 		}
 	}()
 
-	executor, err := buildExecutor(flow.Steps[index])
-	if err != nil {
+	executor := buildExecutor(flow.Steps[index])
+	if executor == nil {
+		// Unknown step type
 		return FlowExecutionError{
-			flow.Name,
-			fmt.Sprintf("step %d could not be parsed", index),
+			FlowName: flow.Name,
+			Message:  fmt.Sprintf("step %d is unknown and cannot be processed", index),
 		}
 	}
 
