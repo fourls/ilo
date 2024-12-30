@@ -23,7 +23,6 @@ type InfoBox [][]string
 func getTermWidth() int {
 	width, _, err := term.GetSize(int(os.Stdin.Fd()))
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
 		width = 50
 	}
 	return width
