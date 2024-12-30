@@ -10,16 +10,19 @@ most other automation servers demand.
 
 ## Development status
 
-Ilo has no stable version and is not currently ready for production use.
+Ilo is unstable, in heavy development, and is not yet suitable for general use.
 
 ### Features
 
-- [x] Define flows in `ilo.yml` files
-- [x] `run` flow step runs an arbitrary command
-- [x] `echo` flow step prints to the console
-- [x] Run flows on-demand with `ilocli run`
-- [x] Register programs by name for use within flows with `ilocli tool add`
-- [ ] Optionally register programs by version for use within flows
+- [x] Command line task runner
+  - [x] Read flows from `ilo.yml` files
+    - [x] `run` flow step runs an arbitrary command
+    - [x] `echo` flow step prints to the console
+      - [ ] Support environment variable substitutions
+    - [ ] Specify environment variables for projects, flows, and steps
+  - [x] Run flows on-demand with `ilocli run`
+  - [x] Register programs by name for use within flows with `ilocli tool add`
+    - [ ] Register programs by name and version for use within flows
 - [ ] Local automation server to schedule and run flows intermittently
 - [ ] Local web interface to view projects, flows, and recent execution information
 
@@ -44,7 +47,7 @@ These flows can then be executed by running `ilocli run <flow>` in the same dire
 
 ## Examples
 
-The best current example of Ilo in use is this repository:
+This repository uses Ilo for its continuous integration:
 
 - [Project ilo.yml](ilo.yml)
 - [Ilo Flows workflow on GitHub Actions](.github/workflows/ilo-build.yml)
