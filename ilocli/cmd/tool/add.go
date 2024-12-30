@@ -14,7 +14,7 @@ var cmdToolAdd = &cobra.Command{
 
 func cmdToolAddImpl(cmd *cobra.Command, args []string) error {
 	toolbox, err := ilolib.NewProdToolbox()
-	if err != nil {
+	if toolbox != nil && err != nil {
 		return err
 	}
 
