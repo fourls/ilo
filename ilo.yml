@@ -6,7 +6,9 @@ flows:
     - echo: Tests done
   build:
     - run: $go build -v ./...
-    - echo: "Built"
+    - echo: "Finished build, installing"
+    - run: $go install -v ./...
+    - echo: "Installed"
   sample:
     - echo: sample start
     - run: $bash -c 'echo "Starting sample for $(whoami)"'
