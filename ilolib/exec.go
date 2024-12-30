@@ -132,10 +132,9 @@ func (e ProjectExecutor) RunFlow(name string, log *log.Logger) (bool, error) {
 		}
 	}
 
-	InfoBox{
-		[]string{"▒▒ " + e.Definition.Name, e.Definition.Path},
-		[]string{fmt.Sprintf("Running '%s'", flow.Name)},
-	}.Print(log)
+	flowId := fmt.Sprintf("%s / %s", e.Definition.Name, flow.Name)
+
+	HorizontalRule{Header: flowId}.Print(log)
 
 	timeStarted := time.Now()
 
@@ -149,9 +148,6 @@ func (e ProjectExecutor) RunFlow(name string, log *log.Logger) (bool, error) {
 	success := true
 
 	for i := range flow.Steps {
-		if i > 0 {
-			HorizontalRule{Suffix: fmt.Sprintf(":%d", i)}.Print(log)
-		}
 		err := e.runStep(flow, i, baseParams)
 
 		if err != nil {
@@ -160,17 +156,16 @@ func (e ProjectExecutor) RunFlow(name string, log *log.Logger) (bool, error) {
 		}
 	}
 
-	duration := time.Since(timeStarted)
+	duration := time.Since(timeStarted).Round(time.Millisecond)
 
+	var status string
 	if success {
-		InfoBox{
-			[]string{fmt.Sprintf("'%s' PASSED in %s", flow.Name, duration)},
-		}.Print(log)
+		status = fmt.Sprintf("PASSED in %s", duration)
 	} else {
-		InfoBox{
-			[]string{fmt.Sprintf("'%s' FAILED after %s", flow.Name, duration)},
-		}.Print(log)
+		status = fmt.Sprintf("FAILED after %s", duration)
 	}
+
+	HorizontalRule{Footer: status}.Print(log)
 
 	return success, nil
 }
