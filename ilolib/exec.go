@@ -33,7 +33,7 @@ type runStepExecutor struct {
 func (s runStepExecutor) execute(params execParams) error {
 	var firstArg = s.Args[0]
 	if strings.HasPrefix(firstArg, "$") {
-		var info, exists = params.Toolbox.Get(firstArg)
+		var info, exists = params.Toolbox.Get(firstArg[1:])
 		if exists {
 			firstArg = info.Path
 		} else {
