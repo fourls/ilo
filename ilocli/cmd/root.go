@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"fourls.dev/ilo/ilocli/cmd/server"
 	"fourls.dev/ilo/ilocli/cmd/tool"
 	"github.com/spf13/cobra"
 )
@@ -16,6 +17,7 @@ var cmdRoot = &cobra.Command{
 func init() {
 	cmdRoot.AddCommand(cmdRun)
 	cmdRoot.AddCommand(tool.CmdTool)
+	cmdRoot.AddCommand(server.CmdServer)
 }
 
 func Execute() {

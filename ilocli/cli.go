@@ -1,7 +1,7 @@
-package main
+package ilocli
 
 import "fourls.dev/ilo/ilocli/cmd"
 
-func main() {
+func Execute() {
 	cmd.Execute()
 }
