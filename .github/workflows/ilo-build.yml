@@ -19,15 +19,15 @@ jobs:
         go-version: '1.23'
 
     - name: Build Ilo
-      run: go install ./ilocli
+      run: go install ./...
 
     - name: Register Tools
       run: |
-        ilocli tool add go
-        ilocli tool add bash
+        ilo tool add go
+        ilo tool add bash
 
     - name: Build
-      run: ilocli run build
+      run: ilo run build
 
     - name: Test
-      run: ilocli run test
+      run: ilo run test
