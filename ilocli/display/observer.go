@@ -12,7 +12,7 @@ type CliObserver struct {
 	logger    *log.Logger
 	project   *ilolib.ProjectDefinition
 	flow      *ilolib.FlowDef
-	step      *ilolib.FlowStep
+	step      ilolib.FlowStep
 	flowStart time.Time
 }
 
@@ -28,7 +28,7 @@ func (o *CliObserver) FlowEntered(f *ilolib.FlowDef) {
 	o.flowStart = time.Now()
 }
 
-func (o *CliObserver) StepEntered(s *ilolib.FlowStep) {
+func (o *CliObserver) StepEntered(s ilolib.FlowStep) {
 	o.step = s
 }
 

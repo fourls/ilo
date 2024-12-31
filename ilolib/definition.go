@@ -12,6 +12,7 @@ import (
 
 type FlowStep interface {
 	StepType() StepType
+	String() string
 }
 
 type RunFlowStep interface {

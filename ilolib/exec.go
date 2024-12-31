@@ -99,7 +99,7 @@ type ExecutionObserver interface {
 	FlowPassed()
 	FlowFailed()
 
-	StepEntered(s *FlowStep)
+	StepEntered(s FlowStep)
 	StepOutput(text string)
 	StepPassed()
 	StepFailed(err error)
@@ -151,7 +151,7 @@ func (e ProjectExecutor) RunFlow(
 	success := true
 
 	for i := range flow.Steps {
-		observer.StepEntered(&flow.Steps[i])
+		observer.StepEntered(flow.Steps[i])
 		err := e.runStep(flow, i, baseParams, buildExecutor)
 
 		if err != nil {

@@ -16,6 +16,8 @@ flows:
     - run: $go version
     - run: $bash -c 'echo "Finishing sample for $(whoami)"'
     - echo: sample end
+  mutate:
+    - run: $bash -c 'touch foo.txt && echo "created $(pwd)/foo.txt"'
   broken:
     - echo: This flow will exit with status code 1
     - run: $bash -c 'exit 1'
