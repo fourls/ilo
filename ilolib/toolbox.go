@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/hairyhenderson/go-which"
 )
@@ -59,6 +60,10 @@ func (t *Toolbox) Get(name string) (ToolInfo, bool) {
 }
 
 func (t *Toolbox) AddAuto(name string) (ToolInfo, error) {
+	if runtime.GOOS == "windows" && filepath.Ext(name) == "" {
+		name = name + ".exe"
+	}
+
 	path := which.Which(name)
 	if path == "" {
 		return ToolInfo{}, fmt.Errorf("add tool '%s': could not find on PATH", name)
