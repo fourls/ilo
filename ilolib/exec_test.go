@@ -14,7 +14,7 @@ func (e MockTestExecutor) StepExecute(params ExecParams) error {
 }
 
 func TestRunStep_PassToExecutor(t *testing.T) {
-	flow := FlowDef{
+	flow := Flow{
 		Steps: []FlowStep{
 			flowStep{stepType: StepEchoMessage},
 		},
@@ -33,7 +33,7 @@ func TestRunStep_PassToExecutor(t *testing.T) {
 		params,
 	)
 
-	err := ProjectExecutor{}.runStep(flow, 0, params, executorFactory)
+	err := FlowExecutor{}.runStep(flow, 0, params, executorFactory)
 	if err != nil {
 		t.Fatalf("runStep got: %v, want: nil", err)
 	}

@@ -7,30 +7,35 @@ import (
 	"fourls.dev/ilo/ilolib"
 )
 
+type scheduledFlow struct {
+	flow     ilolib.Flow
+	schedule ilolib.Schedule
+}
+
 type IloDaemon struct {
-	ticker  *time.Ticker
-	log     *slog.Logger
-	toolbox ilolib.Toolbox
+	ticker        *time.Ticker
+	log           *slog.Logger
+	toolbox       ilolib.Toolbox
+	flowSchedules []scheduledFlow
 }
 
 func (d *IloDaemon) Run() {
-	d.ticker = time.NewTicker(5 * time.Second)
+	d.ticker = time.NewTicker(time.Minute)
 	go d.worker()
 }
 
-func (d *IloDaemon) RunFlow(project ilolib.ProjectDefinition, name string) {
-	observer := newObserver(&project, d.log)
+func (d *IloDaemon) RunFlow(flow ilolib.Flow) {
+	observer := newObserver(flow.Project, d.log)
+	go ilolib.FlowExecutor{
+		Toolbox: d.toolbox,
+	}.RunFlow(flow, &observer)
+}
 
-	go func() {
-		_, err := ilolib.ProjectExecutor{
-			Definition: project,
-			Toolbox:    d.toolbox,
-		}.RunFlow(name, &observer, ilolib.BuildDefaultExecutor)
-
-		if err != nil {
-			d.log.Error("Executor failed", "project", project.Path, "error", err)
-		}
-	}()
+func (d *IloDaemon) ScheduleFlow(flow ilolib.Flow, schedule ilolib.Schedule) {
+	d.flowSchedules = append(d.flowSchedules, scheduledFlow{
+		flow:     flow,
+		schedule: schedule,
+	})
 }
 
 func (d *IloDaemon) worker() {
@@ -43,6 +48,10 @@ func (d *IloDaemon) worker() {
 	}
 }
 
-func (d *IloDaemon) tick(_ time.Time) {
-	// todo: run scheduled jobs
+func (d *IloDaemon) tick(now time.Time) {
+	for _, entry := range d.flowSchedules {
+		if entry.schedule.Match(now) {
+			d.RunFlow(entry.flow)
+		}
+	}
 }

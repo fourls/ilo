@@ -11,7 +11,7 @@ import (
 type CliObserver struct {
 	logger    *log.Logger
 	project   *ilolib.ProjectDefinition
-	flow      *ilolib.FlowDef
+	flow      *ilolib.Flow
 	step      ilolib.FlowStep
 	flowStart time.Time
 }
@@ -20,7 +20,7 @@ func NewObserver(project *ilolib.ProjectDefinition, logger *log.Logger) CliObser
 	return CliObserver{project: project, logger: logger}
 }
 
-func (o *CliObserver) FlowEntered(f *ilolib.FlowDef) {
+func (o *CliObserver) FlowEntered(f *ilolib.Flow) {
 	o.flow = f
 	flowId := fmt.Sprintf("%s / %s", o.project.Name, o.flow.Name)
 	HorizontalRule{Header: flowId}.Print(o.logger)

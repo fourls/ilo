@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -44,18 +45,16 @@ func runCmdImpl(cmd *cobra.Command, args []string) error {
 	toolbox, _ := ilolib.NewProdToolbox()
 	log := log.New(os.Stdout, "", 0)
 
-	executor := ilolib.ProjectExecutor{
-		Definition: *project,
-		Toolbox:    *toolbox,
-	}
+	executor := ilolib.FlowExecutor{Toolbox: *toolbox}
 
 	observer := display.NewObserver(project, log)
 
 	for _, flowName := range args {
-		_, err := executor.RunFlow(flowName, &observer, ilolib.BuildDefaultExecutor)
-		if err != nil {
-			log.Println(err)
+		flow, exists := project.Flows[flowName]
+		if !exists {
+			return fmt.Errorf("no flow '%s' exists", flowName)
 		}
+		executor.RunFlow(flow, &observer)
 	}
 
 	return nil

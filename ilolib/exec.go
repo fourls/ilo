@@ -80,9 +80,11 @@ func BuildDefaultExecutor(step FlowStep) StepExecutor {
 	}
 }
 
-type ProjectExecutor struct {
-	Definition ProjectDefinition
-	Toolbox    Toolbox
+type StepExecutorFactory func(FlowStep) StepExecutor
+
+type FlowExecutor struct {
+	Toolbox             Toolbox
+	StepExecutorFactory StepExecutorFactory
 }
 
 type FlowExecutionError struct {
@@ -95,7 +97,7 @@ func (e FlowExecutionError) Error() string {
 }
 
 type ExecutionObserver interface {
-	FlowEntered(f *FlowDef)
+	FlowEntered(f *Flow)
 	FlowPassed()
 	FlowFailed()
 
@@ -105,8 +107,18 @@ type ExecutionObserver interface {
 	StepFailed(err error)
 }
 
-func (e ProjectExecutor) runStep(flow FlowDef, index int, params ExecParams, buildExecutor func(FlowStep) StepExecutor) error {
-	executor := buildExecutor(flow.Steps[index])
+type NoOpObserver struct{}
+
+func (o NoOpObserver) FlowEntered(f *Flow)    {}
+func (o NoOpObserver) FlowPassed()            {}
+func (o NoOpObserver) FlowFailed()            {}
+func (o NoOpObserver) StepEntered(s FlowStep) {}
+func (o NoOpObserver) StepOutput(text string) {}
+func (o NoOpObserver) StepPassed()            {}
+func (o NoOpObserver) StepFailed(err error)   {}
+
+func (e FlowExecutor) runStep(flow Flow, index int, params ExecParams, executorFactory StepExecutorFactory) error {
+	executor := executorFactory(flow.Steps[index])
 	if executor == nil {
 		// Unknown step type
 		return FlowExecutionError{
@@ -126,33 +138,33 @@ func (e ProjectExecutor) runStep(flow FlowDef, index int, params ExecParams, bui
 	return nil
 }
 
-func (e ProjectExecutor) RunFlow(
-	name string,
+func (e FlowExecutor) RunFlow(
+	flow Flow,
 	observer ExecutionObserver,
-	buildExecutor func(FlowStep) StepExecutor,
-) (bool, error) {
-	flow, ok := e.Definition.Flows[name]
-	if !ok {
-		return false, FlowExecutionError{
-			name,
-			"flow does not exist",
-		}
+) bool {
+	if observer == nil {
+		observer = NoOpObserver{}
 	}
 
 	observer.FlowEntered(&flow)
 
 	baseParams := ExecParams{
 		Env:       os.Environ(),
-		Directory: e.Definition.Dir,
+		Directory: flow.Dir,
 		Observer:  observer,
 		Toolbox:   e.Toolbox,
+	}
+
+	stepExecutorFactory := e.StepExecutorFactory
+	if stepExecutorFactory == nil {
+		stepExecutorFactory = BuildDefaultExecutor
 	}
 
 	success := true
 
 	for i := range flow.Steps {
 		observer.StepEntered(flow.Steps[i])
-		err := e.runStep(flow, i, baseParams, buildExecutor)
+		err := e.runStep(flow, i, baseParams, stepExecutorFactory)
 
 		if err != nil {
 			observer.StepFailed(err)
@@ -169,5 +181,5 @@ func (e ProjectExecutor) RunFlow(
 		observer.FlowFailed()
 	}
 
-	return success, nil
+	return success
 }

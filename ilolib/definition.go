@@ -52,16 +52,17 @@ func (s flowStep) String() string {
 	return s.text
 }
 
-type FlowDef struct {
-	Name  string
-	Steps []FlowStep
+type Flow struct {
+	Name    string
+	Dir     string
+	Steps   []FlowStep
+	Project *ProjectDefinition
 }
 
 type ProjectDefinition struct {
 	Name  string
 	Path  string
-	Dir   string
-	Flows map[string]FlowDef
+	Flows map[string]Flow
 }
 
 type YamlStepDef struct {
@@ -82,7 +83,6 @@ func ReadProjectDefinition(path string) (*ProjectDefinition, error) {
 
 	project := ProjectDefinition{
 		Path: path,
-		Dir:  filepath.Dir(path),
 	}
 
 	err = parseProjectDefinitionYaml(bytes, &project)
@@ -99,13 +99,16 @@ func parseProjectDefinitionYaml(data []byte, project *ProjectDefinition) error {
 	}
 
 	project.Name = yml.Name
-	project.Flows = make(map[string]FlowDef, len(yml.Flows))
+	project.Flows = make(map[string]Flow, len(yml.Flows))
+	projectDir := filepath.Dir(project.Path)
 
 	for flowName, flowCmds := range yml.Flows {
-		var flow FlowDef
-
-		flow.Name = flowName
-		flow.Steps = make([]FlowStep, len(flowCmds))
+		flow := Flow{
+			Name:    flowName,
+			Steps:   make([]FlowStep, len(flowCmds)),
+			Project: project,
+			Dir:     projectDir,
+		}
 
 		for i, line := range flowCmds {
 			var stepType StepType

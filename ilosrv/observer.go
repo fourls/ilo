@@ -9,7 +9,7 @@ import (
 type StructuredObserver struct {
 	logger    *slog.Logger
 	project   *ilolib.ProjectDefinition
-	flow      *ilolib.FlowDef
+	flow      *ilolib.Flow
 	step      ilolib.FlowStep
 	stepIndex int
 }
@@ -18,7 +18,7 @@ func newObserver(project *ilolib.ProjectDefinition, logger *slog.Logger) Structu
 	return StructuredObserver{project: project, logger: logger.With("project", project.Path), stepIndex: -1}
 }
 
-func (o *StructuredObserver) FlowEntered(f *ilolib.FlowDef) {
+func (o *StructuredObserver) FlowEntered(f *ilolib.Flow) {
 	o.flow = f
 	o.stepIndex = -1
 	o.logger.Info("Flow entered", "flow", o.flow.Name)
