@@ -60,11 +60,13 @@ func (t *Toolbox) Get(name string) (ToolInfo, bool) {
 }
 
 func (t *Toolbox) AddAuto(name string) (ToolInfo, error) {
+	programName := name
+
 	if runtime.GOOS == "windows" && filepath.Ext(name) == "" {
-		name = name + ".exe"
+		programName = name + ".exe"
 	}
 
-	path := which.Which(name)
+	path := which.Which(programName)
 	if path == "" {
 		return ToolInfo{}, fmt.Errorf("add tool '%s': could not find on PATH", name)
 	}
