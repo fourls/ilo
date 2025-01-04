@@ -46,9 +46,6 @@ func runCmdImpl(cmd *cobra.Command, args []string) error {
 
 	toolbox, _ := data.NewProdToolbox()
 	log := log.New(os.Stdout, "", 0)
-
-	executor := exec.FlowExecutor{Toolbox: *toolbox}
-
 	observer := display.NewObserver(project, log)
 
 	for _, flowName := range args {
@@ -56,7 +53,7 @@ func runCmdImpl(cmd *cobra.Command, args []string) error {
 		if !exists {
 			return fmt.Errorf("no flow '%s' exists", flowName)
 		}
-		executor.RunFlow(flow, &observer)
+		exec.RunFlow(flow, exec.RunStep, *toolbox, &observer)
 	}
 
 	return nil

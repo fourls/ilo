@@ -24,16 +24,8 @@ type ExecParams struct {
 	Toolbox   data.Toolbox
 }
 
-type StepExecutor interface {
-	StepExecute(params ExecParams) error
-}
-
-type runStepExecutor struct {
-	def ilofile.RunFlowStep
-}
-
-func (s runStepExecutor) StepExecute(params ExecParams) error {
-	args := s.def.Args()
+func doRunStep(step ilofile.RunFlowStep, params ExecParams) error {
+	args := step.Args()
 	if len(args) < 1 {
 		return errors.New("execute run step: no arguments provided")
 	}
@@ -63,32 +55,19 @@ func (s runStepExecutor) StepExecute(params ExecParams) error {
 	return err
 }
 
-type echoStepExecutor struct {
-	def ilofile.EchoFlowStep
-}
-
-func (s echoStepExecutor) StepExecute(params ExecParams) error {
-	printLines(s.def.Message(), params.Observer.StepOutput)
-	return nil
-}
-
-func BuildDefaultExecutor(step ilofile.Step) StepExecutor {
+func RunStep(step ilofile.Step, params ExecParams) error {
 	switch step.StepType() {
 	case ilofile.StepEchoMessage:
-		return echoStepExecutor{step.(ilofile.EchoFlowStep)}
-	case ilofile.StepRunProgram:
-		return runStepExecutor{step.(ilofile.RunFlowStep)}
-	default:
+		printLines(step.(ilofile.EchoFlowStep).Message(), params.Observer.StepOutput)
 		return nil
+	case ilofile.StepRunProgram:
+		return doRunStep(step.(ilofile.RunFlowStep), params)
+	default:
+		return errors.New("step failed: Unknown step type")
 	}
 }
 
-type StepExecutorFactory func(ilofile.Step) StepExecutor
-
-type FlowExecutor struct {
-	Toolbox             data.Toolbox
-	StepExecutorFactory StepExecutorFactory
-}
+type StepExecutorFunc func(ilofile.Step, ExecParams) error
 
 type FlowExecutionError struct {
 	FlowName string
@@ -110,43 +89,32 @@ type ExecutionObserver interface {
 	StepFailed(err error)
 }
 
-type NoOpObserver struct{}
+type noOpObserver struct{}
 
-func (o NoOpObserver) FlowEntered(f *ilofile.Flow) {}
-func (o NoOpObserver) FlowPassed()                 {}
-func (o NoOpObserver) FlowFailed()                 {}
-func (o NoOpObserver) StepEntered(s ilofile.Step)  {}
-func (o NoOpObserver) StepOutput(text string)      {}
-func (o NoOpObserver) StepPassed()                 {}
-func (o NoOpObserver) StepFailed(err error)        {}
+func (o noOpObserver) FlowEntered(f *ilofile.Flow) {}
+func (o noOpObserver) FlowPassed()                 {}
+func (o noOpObserver) FlowFailed()                 {}
+func (o noOpObserver) StepEntered(s ilofile.Step)  {}
+func (o noOpObserver) StepOutput(text string)      {}
+func (o noOpObserver) StepPassed()                 {}
+func (o noOpObserver) StepFailed(err error)        {}
 
-func (e FlowExecutor) runStep(flow ilofile.Flow, index int, params ExecParams, executorFactory StepExecutorFactory) error {
-	executor := executorFactory(flow.Steps[index])
-	if executor == nil {
-		// Unknown step type
-		return FlowExecutionError{
-			FlowName: flow.Name,
-			Message:  fmt.Sprintf("step %d is unknown and cannot be processed", index),
-		}
-	}
-
-	err := executor.StepExecute(params)
-	if err != nil {
-		return FlowExecutionError{
-			FlowName: flow.Name,
-			Message:  fmt.Sprintf("step %d failed: %v", index, err),
-		}
-	}
-
-	return nil
-}
-
-func (e FlowExecutor) RunFlow(
+// RunFlow executes all steps in the specified flow using stepExecutor,
+// and reports whether all steps were executed successfully.
+// If stepExecutor is omitted, steps will not be executed.
+// If provided, the observer will be called alongside various milestones,
+// see ExecutionObserver for more information.
+func RunFlow(
 	flow ilofile.Flow,
+	stepExecutor StepExecutorFunc,
+	toolbox data.Toolbox,
 	observer ExecutionObserver,
 ) bool {
+	if stepExecutor == nil {
+		stepExecutor = func(ilofile.Step, ExecParams) error { return nil }
+	}
 	if observer == nil {
-		observer = NoOpObserver{}
+		observer = noOpObserver{}
 	}
 
 	observer.FlowEntered(&flow)
@@ -155,19 +123,15 @@ func (e FlowExecutor) RunFlow(
 		Env:       os.Environ(),
 		Directory: flow.Dir,
 		Observer:  observer,
-		Toolbox:   e.Toolbox,
-	}
-
-	stepExecutorFactory := e.StepExecutorFactory
-	if stepExecutorFactory == nil {
-		stepExecutorFactory = BuildDefaultExecutor
+		Toolbox:   toolbox,
 	}
 
 	success := true
 
 	for i := range flow.Steps {
 		observer.StepEntered(flow.Steps[i])
-		err := e.runStep(flow, i, baseParams, stepExecutorFactory)
+
+		err := stepExecutor(flow.Steps[i], baseParams)
 
 		if err != nil {
 			observer.StepFailed(err)

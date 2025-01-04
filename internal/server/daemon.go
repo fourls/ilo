@@ -28,9 +28,7 @@ func (d *IloDaemon) Run() {
 
 func (d *IloDaemon) RunFlow(flow ilofile.Flow) {
 	observer := newObserver(flow.Project, d.log)
-	go exec.FlowExecutor{
-		Toolbox: d.toolbox,
-	}.RunFlow(flow, &observer)
+	go exec.RunFlow(flow, exec.RunStep, d.toolbox, &observer)
 }
 
 func (d *IloDaemon) ScheduleFlow(flow ilofile.Flow, schedule data.Schedule) {
