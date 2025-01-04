@@ -1,11 +1,11 @@
-package cmd
+package cli
 
 import (
 	"fmt"
 	"os"
 
-	"github.com/fourls/ilo/internal/ilocli/cmd/server"
-	"github.com/fourls/ilo/internal/ilocli/cmd/tool"
+	"github.com/fourls/ilo/internal/cli/server"
+	"github.com/fourls/ilo/internal/cli/tool"
 	"github.com/spf13/cobra"
 )
 

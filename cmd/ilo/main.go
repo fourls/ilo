@@ -1,7 +1,7 @@
 package main
 
-import "github.com/fourls/ilo/internal/ilocli"
+import "github.com/fourls/ilo/internal/cli"
 
 func main() {
-	ilocli.Execute()
+	cli.Execute()
 }

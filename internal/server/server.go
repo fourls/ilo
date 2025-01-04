@@ -1,4 +1,4 @@
-package ilosrv
+package server
 
 import (
 	"fmt"
@@ -8,14 +8,15 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/fourls/ilo/internal/ilolib"
+	"github.com/fourls/ilo/internal/data"
+	"github.com/fourls/ilo/internal/ilofile/iloyml"
 	"github.com/gin-gonic/gin"
 )
 
 func BuildServer() *gin.Engine {
 	r := gin.Default()
 
-	toolbox, _ := ilolib.NewProdToolbox()
+	toolbox, _ := data.NewProdToolbox()
 
 	daemon := IloDaemon{
 		toolbox: *toolbox,
@@ -27,7 +28,7 @@ func BuildServer() *gin.Engine {
 		projectPath := c.Query("project")
 		flowName := c.Query("flow")
 
-		project, err := ilolib.ReadProjectDefinition(projectPath)
+		project, err := iloyml.New(projectPath)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, map[string]any{
 				"error": err.Error(),
@@ -54,7 +55,7 @@ func BuildServer() *gin.Engine {
 		scheduleHour, _ := strconv.Atoi(c.Query("hour"))
 		scheduleMinute, _ := strconv.Atoi(c.Query("minute"))
 
-		project, err := ilolib.ReadProjectDefinition(projectPath)
+		project, err := iloyml.New(projectPath)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, map[string]any{
 				"error": err.Error(),
@@ -65,7 +66,7 @@ func BuildServer() *gin.Engine {
 		flow, exists := project.Flows[flowName]
 
 		if exists {
-			schedule := ilolib.Schedule{Minute: scheduleMinute, Hour: scheduleHour, Day: time.Weekday(scheduleDay)}
+			schedule := data.Schedule{Minute: scheduleMinute, Hour: scheduleHour, Day: time.Weekday(scheduleDay)}
 
 			daemon.ScheduleFlow(flow, schedule)
 			c.JSON(http.StatusOK, map[string]any{

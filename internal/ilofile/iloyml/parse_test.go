@@ -1,11 +1,13 @@
-package ilolib
+package iloyml
 
 import (
 	"reflect"
 	"testing"
+
+	"github.com/fourls/ilo/internal/ilofile"
 )
 
-func TestParseYamlProjDef(t *testing.T) {
+func TestParseFlows(t *testing.T) {
 	var data = []byte(`
 flows:
   foo:
@@ -15,7 +17,7 @@ flows:
   bar:
     - echo: Doing "bar" now`)
 
-	var def ProjectDefinition
+	var def ilofile.Definition
 	if err := parseProjectDefinitionYaml(data, &def); err != nil {
 		t.Fatalf("got: %v, want: nil", err)
 	}
@@ -29,14 +31,14 @@ flows:
 		t.Fatalf("got: %d steps in flow, want: 3 steps in flow", len(flow.Steps))
 	}
 
-	var expectedStep = flowStep{stepType: StepEchoMessage, text: "Starting foo"}
+	var expectedStep = step{stepType: ilofile.StepEchoMessage, text: "Starting foo"}
 
 	if !reflect.DeepEqual(flow.Steps[0], expectedStep) {
 		t.Fatalf("got: %s, want: %s", flow.Steps[0], expectedStep)
 	}
 
-	expectedStep = flowStep{
-		stepType: StepRunProgram,
+	expectedStep = step{
+		stepType: ilofile.StepRunProgram,
 		text:     "cmd -abc \"this is a foo text\"",
 		args:     []string{"cmd", "-abc", "this is a foo text"},
 	}

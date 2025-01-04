@@ -3,7 +3,7 @@ package tool
 import (
 	"fmt"
 
-	"github.com/fourls/ilo/internal/ilolib"
+	"github.com/fourls/ilo/internal/data"
 	"github.com/spf13/cobra"
 )
 
@@ -13,7 +13,7 @@ var cmdToolAdd = &cobra.Command{
 }
 
 func cmdToolAddImpl(cmd *cobra.Command, args []string) error {
-	toolbox, err := ilolib.NewProdToolbox()
+	toolbox, err := data.NewProdToolbox()
 	if err != nil {
 		return err
 	}

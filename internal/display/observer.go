@@ -5,22 +5,22 @@ import (
 	"log"
 	"time"
 
-	"github.com/fourls/ilo/internal/ilolib"
+	"github.com/fourls/ilo/internal/ilofile"
 )
 
 type CliObserver struct {
 	logger    *log.Logger
-	project   *ilolib.ProjectDefinition
-	flow      *ilolib.Flow
-	step      ilolib.FlowStep
+	project   *ilofile.Definition
+	flow      *ilofile.Flow
+	step      ilofile.Step
 	flowStart time.Time
 }
 
-func NewObserver(project *ilolib.ProjectDefinition, logger *log.Logger) CliObserver {
+func NewObserver(project *ilofile.Definition, logger *log.Logger) CliObserver {
 	return CliObserver{project: project, logger: logger}
 }
 
-func (o *CliObserver) FlowEntered(f *ilolib.Flow) {
+func (o *CliObserver) FlowEntered(f *ilofile.Flow) {
 	o.flow = f
 	flowId := fmt.Sprintf("%s / %s", o.project.Name, o.flow.Name)
 	HorizontalRule{Header: flowId}.Print(o.logger)
@@ -28,7 +28,7 @@ func (o *CliObserver) FlowEntered(f *ilolib.Flow) {
 	o.flowStart = time.Now()
 }
 
-func (o *CliObserver) StepEntered(s ilolib.FlowStep) {
+func (o *CliObserver) StepEntered(s ilofile.Step) {
 	o.step = s
 }
 

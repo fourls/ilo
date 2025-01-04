@@ -1,4 +1,4 @@
-package ilolib
+package exec
 
 import (
 	"errors"
@@ -6,6 +6,9 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/fourls/ilo/internal/data"
+	"github.com/fourls/ilo/internal/ilofile"
 )
 
 func printLines(text string, println func(string)) {
@@ -18,7 +21,7 @@ type ExecParams struct {
 	Env       []string
 	Directory string
 	Observer  ExecutionObserver
-	Toolbox   Toolbox
+	Toolbox   data.Toolbox
 }
 
 type StepExecutor interface {
@@ -26,7 +29,7 @@ type StepExecutor interface {
 }
 
 type runStepExecutor struct {
-	def RunFlowStep
+	def ilofile.RunFlowStep
 }
 
 func (s runStepExecutor) StepExecute(params ExecParams) error {
@@ -61,7 +64,7 @@ func (s runStepExecutor) StepExecute(params ExecParams) error {
 }
 
 type echoStepExecutor struct {
-	def EchoFlowStep
+	def ilofile.EchoFlowStep
 }
 
 func (s echoStepExecutor) StepExecute(params ExecParams) error {
@@ -69,21 +72,21 @@ func (s echoStepExecutor) StepExecute(params ExecParams) error {
 	return nil
 }
 
-func BuildDefaultExecutor(step FlowStep) StepExecutor {
+func BuildDefaultExecutor(step ilofile.Step) StepExecutor {
 	switch step.StepType() {
-	case StepEchoMessage:
-		return echoStepExecutor{step.(EchoFlowStep)}
-	case StepRunProgram:
-		return runStepExecutor{step.(RunFlowStep)}
+	case ilofile.StepEchoMessage:
+		return echoStepExecutor{step.(ilofile.EchoFlowStep)}
+	case ilofile.StepRunProgram:
+		return runStepExecutor{step.(ilofile.RunFlowStep)}
 	default:
 		return nil
 	}
 }
 
-type StepExecutorFactory func(FlowStep) StepExecutor
+type StepExecutorFactory func(ilofile.Step) StepExecutor
 
 type FlowExecutor struct {
-	Toolbox             Toolbox
+	Toolbox             data.Toolbox
 	StepExecutorFactory StepExecutorFactory
 }
 
@@ -97,11 +100,11 @@ func (e FlowExecutionError) Error() string {
 }
 
 type ExecutionObserver interface {
-	FlowEntered(f *Flow)
+	FlowEntered(f *ilofile.Flow)
 	FlowPassed()
 	FlowFailed()
 
-	StepEntered(s FlowStep)
+	StepEntered(s ilofile.Step)
 	StepOutput(text string)
 	StepPassed()
 	StepFailed(err error)
@@ -109,15 +112,15 @@ type ExecutionObserver interface {
 
 type NoOpObserver struct{}
 
-func (o NoOpObserver) FlowEntered(f *Flow)    {}
-func (o NoOpObserver) FlowPassed()            {}
-func (o NoOpObserver) FlowFailed()            {}
-func (o NoOpObserver) StepEntered(s FlowStep) {}
-func (o NoOpObserver) StepOutput(text string) {}
-func (o NoOpObserver) StepPassed()            {}
-func (o NoOpObserver) StepFailed(err error)   {}
+func (o NoOpObserver) FlowEntered(f *ilofile.Flow) {}
+func (o NoOpObserver) FlowPassed()                 {}
+func (o NoOpObserver) FlowFailed()                 {}
+func (o NoOpObserver) StepEntered(s ilofile.Step)  {}
+func (o NoOpObserver) StepOutput(text string)      {}
+func (o NoOpObserver) StepPassed()                 {}
+func (o NoOpObserver) StepFailed(err error)        {}
 
-func (e FlowExecutor) runStep(flow Flow, index int, params ExecParams, executorFactory StepExecutorFactory) error {
+func (e FlowExecutor) runStep(flow ilofile.Flow, index int, params ExecParams, executorFactory StepExecutorFactory) error {
 	executor := executorFactory(flow.Steps[index])
 	if executor == nil {
 		// Unknown step type
@@ -139,7 +142,7 @@ func (e FlowExecutor) runStep(flow Flow, index int, params ExecParams, executorF
 }
 
 func (e FlowExecutor) RunFlow(
-	flow Flow,
+	flow ilofile.Flow,
 	observer ExecutionObserver,
 ) bool {
 	if observer == nil {

@@ -1,21 +1,23 @@
-package ilosrv
+package server
 
 import (
 	"log/slog"
 	"time"
 
-	"github.com/fourls/ilo/internal/ilolib"
+	"github.com/fourls/ilo/internal/data"
+	"github.com/fourls/ilo/internal/exec"
+	"github.com/fourls/ilo/internal/ilofile"
 )
 
 type scheduledFlow struct {
-	flow     ilolib.Flow
-	schedule ilolib.Schedule
+	flow     ilofile.Flow
+	schedule data.Schedule
 }
 
 type IloDaemon struct {
 	ticker        *time.Ticker
 	log           *slog.Logger
-	toolbox       ilolib.Toolbox
+	toolbox       data.Toolbox
 	flowSchedules []scheduledFlow
 }
 
@@ -24,14 +26,14 @@ func (d *IloDaemon) Run() {
 	go d.worker()
 }
 
-func (d *IloDaemon) RunFlow(flow ilolib.Flow) {
+func (d *IloDaemon) RunFlow(flow ilofile.Flow) {
 	observer := newObserver(flow.Project, d.log)
-	go ilolib.FlowExecutor{
+	go exec.FlowExecutor{
 		Toolbox: d.toolbox,
 	}.RunFlow(flow, &observer)
 }
 
-func (d *IloDaemon) ScheduleFlow(flow ilolib.Flow, schedule ilolib.Schedule) {
+func (d *IloDaemon) ScheduleFlow(flow ilofile.Flow, schedule data.Schedule) {
 	d.flowSchedules = append(d.flowSchedules, scheduledFlow{
 		flow:     flow,
 		schedule: schedule,

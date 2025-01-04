@@ -6,8 +6,8 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/fourls/ilo/internal/ilocli/display"
-	"github.com/fourls/ilo/internal/ilosrv"
+	"github.com/fourls/ilo/internal/display"
+	"github.com/fourls/ilo/internal/server"
 	"github.com/spf13/cobra"
 )
 
@@ -31,7 +31,7 @@ func cmdServerRunImpl(cmd *cobra.Command, args []string) error {
 		os.Exit(1)
 	}()
 
-	server := ilosrv.BuildServer()
+	server := server.BuildServer()
 	err := server.Run("localhost:8116")
 
 	if err != nil {

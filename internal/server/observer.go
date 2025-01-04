@@ -1,30 +1,30 @@
-package ilosrv
+package server
 
 import (
 	"log/slog"
 
-	"github.com/fourls/ilo/internal/ilolib"
+	"github.com/fourls/ilo/internal/ilofile"
 )
 
 type StructuredObserver struct {
 	logger    *slog.Logger
-	project   *ilolib.ProjectDefinition
-	flow      *ilolib.Flow
-	step      ilolib.FlowStep
+	project   *ilofile.Definition
+	flow      *ilofile.Flow
+	step      ilofile.Step
 	stepIndex int
 }
 
-func newObserver(project *ilolib.ProjectDefinition, logger *slog.Logger) StructuredObserver {
+func newObserver(project *ilofile.Definition, logger *slog.Logger) StructuredObserver {
 	return StructuredObserver{project: project, logger: logger.With("project", project.Path), stepIndex: -1}
 }
 
-func (o *StructuredObserver) FlowEntered(f *ilolib.Flow) {
+func (o *StructuredObserver) FlowEntered(f *ilofile.Flow) {
 	o.flow = f
 	o.stepIndex = -1
 	o.logger.Info("Flow entered", "flow", o.flow.Name)
 }
 
-func (o *StructuredObserver) StepEntered(s ilolib.FlowStep) {
+func (o *StructuredObserver) StepEntered(s ilofile.Step) {
 	o.step = s
 	o.stepIndex += 1
 	o.logger.Info("Step entered", "flow", o.flow.Name, "step", o.stepIndex, "stepText", o.step.String())

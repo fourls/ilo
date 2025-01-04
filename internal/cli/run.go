@@ -1,4 +1,4 @@
-package cmd
+package cli
 
 import (
 	"fmt"
@@ -6,8 +6,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/fourls/ilo/internal/ilocli/display"
-	"github.com/fourls/ilo/internal/ilolib"
+	"github.com/fourls/ilo/internal/data"
+	"github.com/fourls/ilo/internal/display"
+	"github.com/fourls/ilo/internal/exec"
+	"github.com/fourls/ilo/internal/ilofile/iloyml"
 	"github.com/spf13/cobra"
 )
 
@@ -37,15 +39,15 @@ func runCmdImpl(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	project, err := ilolib.ReadProjectDefinition(projectPath)
+	project, err := iloyml.New(projectPath)
 	if err != nil {
 		return err
 	}
 
-	toolbox, _ := ilolib.NewProdToolbox()
+	toolbox, _ := data.NewProdToolbox()
 	log := log.New(os.Stdout, "", 0)
 
-	executor := ilolib.FlowExecutor{Toolbox: *toolbox}
+	executor := exec.FlowExecutor{Toolbox: *toolbox}
 
 	observer := display.NewObserver(project, log)
 

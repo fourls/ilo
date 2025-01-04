@@ -1,4 +1,4 @@
-package ilolib
+package iloyml
 
 import (
 	"errors"
@@ -7,81 +7,49 @@ import (
 	"path/filepath"
 	"unicode"
 
+	"github.com/fourls/ilo/internal/ilofile"
 	"gopkg.in/yaml.v3"
 )
 
-type FlowStep interface {
-	StepType() StepType
-	String() string
-}
-
-type RunFlowStep interface {
-	Args() []string
-}
-
-type EchoFlowStep interface {
-	Message() string
-}
-
-type StepType int
-
-const (
-	StepRunProgram StepType = iota
-	StepEchoMessage
-)
-
-type flowStep struct {
-	text     string
-	args     []string
-	stepType StepType
-}
-
-func (s flowStep) StepType() StepType {
-	return s.stepType
-}
-
-func (s flowStep) Args() []string {
-	return s.args
-}
-
-func (s flowStep) Message() string {
-	return s.text
-}
-
-func (s flowStep) String() string {
-	return s.text
-}
-
-type Flow struct {
-	Name    string
-	Dir     string
-	Steps   []FlowStep
-	Project *ProjectDefinition
-}
-
-type ProjectDefinition struct {
-	Name  string
-	Path  string
-	Flows map[string]Flow
-}
-
-type YamlStepDef struct {
+type yamlStepDef struct {
 	Echo string
 	Run  string
 }
 
-type YamlProjDef struct {
+type yamlProjDef struct {
 	Name  string
-	Flows map[string][]YamlStepDef
+	Flows map[string][]yamlStepDef
 }
 
-func ReadProjectDefinition(path string) (*ProjectDefinition, error) {
+type step struct {
+	text     string
+	args     []string
+	stepType ilofile.StepType
+}
+
+func (s step) StepType() ilofile.StepType {
+	return s.stepType
+}
+
+func (s step) Args() []string {
+	return s.args
+}
+
+func (s step) Message() string {
+	return s.text
+}
+
+func (s step) String() string {
+	return s.text
+}
+
+func New(path string) (*ilofile.Definition, error) {
 	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	project := ProjectDefinition{
+	project := ilofile.Definition{
 		Path: path,
 	}
 
@@ -92,44 +60,44 @@ func ReadProjectDefinition(path string) (*ProjectDefinition, error) {
 	return &project, nil
 }
 
-func parseProjectDefinitionYaml(data []byte, project *ProjectDefinition) error {
-	var yml YamlProjDef
+func parseProjectDefinitionYaml(data []byte, project *ilofile.Definition) error {
+	var yml yamlProjDef
 	if err := yaml.Unmarshal(data, &yml); err != nil {
 		return err
 	}
 
 	project.Name = yml.Name
-	project.Flows = make(map[string]Flow, len(yml.Flows))
+	project.Flows = make(map[string]ilofile.Flow, len(yml.Flows))
 	projectDir := filepath.Dir(project.Path)
 
 	for flowName, flowCmds := range yml.Flows {
-		flow := Flow{
+		flow := ilofile.Flow{
 			Name:    flowName,
-			Steps:   make([]FlowStep, len(flowCmds)),
+			Steps:   make([]ilofile.Step, len(flowCmds)),
 			Project: project,
 			Dir:     projectDir,
 		}
 
 		for i, line := range flowCmds {
-			var stepType StepType
+			var stepType ilofile.StepType
 			switch {
 			case line.Run != "" && line.Echo == "":
-				stepType = StepRunProgram
+				stepType = ilofile.StepRunProgram
 			case line.Run == "" && line.Echo != "":
-				stepType = StepEchoMessage
+				stepType = ilofile.StepEchoMessage
 			default:
 				return fmt.Errorf("parse '%s' step %d: invalid type", flowName, i)
 			}
 
-			step := flowStep{
+			step := step{
 				stepType: stepType,
 			}
 
 			switch step.stepType {
-			case StepRunProgram:
+			case ilofile.StepRunProgram:
 				step.text = line.Run
 				parseArgsString(step.text, &step.args)
-			case StepEchoMessage:
+			case ilofile.StepEchoMessage:
 				step.text = line.Echo
 			}
 

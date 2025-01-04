@@ -1,4 +1,4 @@
-package ilolib
+package data
 
 import (
 	"encoding/json"
