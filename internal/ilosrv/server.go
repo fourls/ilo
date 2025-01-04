@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"fourls.dev/ilo/ilolib"
+	"github.com/fourls/ilo/internal/ilolib"
 	"github.com/gin-gonic/gin"
 )
 

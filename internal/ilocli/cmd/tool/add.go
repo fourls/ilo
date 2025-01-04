@@ -3,7 +3,7 @@ package tool
 import (
 	"fmt"
 
-	"fourls.dev/ilo/ilolib"
+	"github.com/fourls/ilo/internal/ilolib"
 	"github.com/spf13/cobra"
 )
 

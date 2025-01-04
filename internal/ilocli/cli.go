@@ -1,6 +1,6 @@
 package ilocli
 
-import "fourls.dev/ilo/ilocli/cmd"
+import "github.com/fourls/ilo/internal/ilocli/cmd"
 
 func Execute() {
 	cmd.Execute()

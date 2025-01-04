@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"fourls.dev/ilo/ilocli/display"
-	"fourls.dev/ilo/ilolib"
+	"github.com/fourls/ilo/internal/ilocli/display"
+	"github.com/fourls/ilo/internal/ilolib"
 	"github.com/spf13/cobra"
 )
 

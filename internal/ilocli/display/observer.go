@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"fourls.dev/ilo/ilolib"
+	"github.com/fourls/ilo/internal/ilolib"
 )
 
 type CliObserver struct {

@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"time"
 
-	"fourls.dev/ilo/ilolib"
+	"github.com/fourls/ilo/internal/ilolib"
 )
 
 type scheduledFlow struct {

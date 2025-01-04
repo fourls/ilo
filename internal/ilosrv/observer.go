@@ -3,7 +3,7 @@ package ilosrv
 import (
 	"log/slog"
 
-	"fourls.dev/ilo/ilolib"
+	"github.com/fourls/ilo/internal/ilolib"
 )
 
 type StructuredObserver struct {

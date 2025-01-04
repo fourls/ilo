@@ -1,4 +1,4 @@
-module fourls.dev/ilo
+module github.com/fourls/ilo
 
 go 1.23.4
 

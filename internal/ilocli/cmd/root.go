@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"fourls.dev/ilo/ilocli/cmd/server"
-	"fourls.dev/ilo/ilocli/cmd/tool"
+	"github.com/fourls/ilo/internal/ilocli/cmd/server"
+	"github.com/fourls/ilo/internal/ilocli/cmd/tool"
 	"github.com/spf13/cobra"
 )
 

@@ -1,6 +1,6 @@
 package main
 
-import "fourls.dev/ilo/ilocli"
+import "github.com/fourls/ilo/internal/ilocli"
 
 func main() {
 	ilocli.Execute()

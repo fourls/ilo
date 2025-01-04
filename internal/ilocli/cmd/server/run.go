@@ -6,8 +6,8 @@ import (
 	"os"
 	"os/signal"
 
-	"fourls.dev/ilo/ilocli/display"
-	"fourls.dev/ilo/ilosrv"
+	"github.com/fourls/ilo/internal/ilocli/display"
+	"github.com/fourls/ilo/internal/ilosrv"
 	"github.com/spf13/cobra"
 )
 
