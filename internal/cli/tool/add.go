@@ -3,7 +3,8 @@ package tool
 import (
 	"fmt"
 
-	"github.com/fourls/ilo/internal/data"
+	"github.com/fourls/ilo/internal/data/provide"
+	"github.com/fourls/ilo/internal/data/toolbox"
 	"github.com/spf13/cobra"
 )
 
@@ -13,18 +14,20 @@ var cmdToolAdd = &cobra.Command{
 }
 
 func cmdToolAddImpl(cmd *cobra.Command, args []string) error {
-	toolbox, err := data.NewProdToolbox()
+	provider := provide.NewConfigProvider[toolbox.Toolbox]()
+	toolbox, err := provider.Load("toolbox",
+		provide.YamlUnmarshal[toolbox.Toolbox])
 	if err != nil {
 		return err
 	}
 
-	for _, toolName := range args {
-		info, err := toolbox.AddAuto(toolName)
+	for _, name := range args {
+		err := toolbox.FindAndAdd(name)
 		if err != nil {
 			return err
 		}
-		fmt.Printf("Registered $%s at path '%s'\n", toolName, info.Path)
+		fmt.Printf("Registered $%s at path '%s'\n", name, (*toolbox)[name])
 	}
 
-	return toolbox.Save()
+	return provider.Save("toolbox", toolbox, provide.YamlMarshal)
 }

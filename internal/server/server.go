@@ -9,14 +9,18 @@ import (
 	"time"
 
 	"github.com/fourls/ilo/internal/data"
+	"github.com/fourls/ilo/internal/data/provide"
+	"github.com/fourls/ilo/internal/data/toolbox"
 	"github.com/fourls/ilo/internal/ilofile/iloyml"
 	"github.com/gin-gonic/gin"
 )
 
-func BuildServer() *gin.Engine {
+func BuildServer(provider provide.Provider[toolbox.Toolbox]) *gin.Engine {
 	r := gin.Default()
 
-	toolbox, _ := data.NewProdToolbox()
+	toolbox, _ := provider.Load(
+		"toolbox",
+		provide.YamlUnmarshal[toolbox.Toolbox])
 
 	daemon := IloDaemon{
 		toolbox: *toolbox,

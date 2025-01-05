@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/fourls/ilo/internal/data/provide"
+	"github.com/fourls/ilo/internal/data/toolbox"
 	"github.com/fourls/ilo/internal/display"
 	"github.com/fourls/ilo/internal/server"
 	"github.com/spf13/cobra"
@@ -31,7 +33,7 @@ func cmdServerRunImpl(cmd *cobra.Command, args []string) error {
 		os.Exit(1)
 	}()
 
-	server := server.BuildServer()
+	server := server.BuildServer(provide.NewConfigProvider[toolbox.Toolbox]())
 	err := server.Run("localhost:8116")
 
 	if err != nil {

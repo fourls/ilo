@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/fourls/ilo/internal/data"
+	"github.com/fourls/ilo/internal/data/toolbox"
 	"github.com/fourls/ilo/internal/ilofile"
 )
 
@@ -21,7 +21,7 @@ type ExecParams struct {
 	Env       []string
 	Directory string
 	Observer  ExecutionObserver
-	Toolbox   data.Toolbox
+	Toolbox   toolbox.Toolbox
 }
 
 func doRunStep(step ilofile.RunFlowStep, params ExecParams) error {
@@ -32,9 +32,9 @@ func doRunStep(step ilofile.RunFlowStep, params ExecParams) error {
 
 	firstArg := args[0]
 	if strings.HasPrefix(firstArg, "$") {
-		var info, exists = params.Toolbox.Get(firstArg[1:])
+		var path, exists = params.Toolbox[firstArg[1:]]
 		if exists {
-			firstArg = info.Path
+			firstArg = path
 		} else {
 			return errors.New("execute run step: no tool found for substitution " + firstArg)
 		}
@@ -107,7 +107,7 @@ func (o noOpObserver) StepFailed(err error)        {}
 func RunFlow(
 	flow ilofile.Flow,
 	stepExecutor StepExecutorFunc,
-	toolbox data.Toolbox,
+	toolbox toolbox.Toolbox,
 	observer ExecutionObserver,
 ) bool {
 	if stepExecutor == nil {

@@ -6,7 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/fourls/ilo/internal/data"
+	"github.com/fourls/ilo/internal/data/provide"
+	"github.com/fourls/ilo/internal/data/toolbox"
 	"github.com/fourls/ilo/internal/display"
 	"github.com/fourls/ilo/internal/exec"
 	"github.com/fourls/ilo/internal/ilofile/iloyml"
@@ -44,7 +45,11 @@ func runCmdImpl(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	toolbox, _ := data.NewProdToolbox()
+	provider := provide.NewConfigProvider[toolbox.Toolbox]()
+	toolbox, _ := provider.Load(
+		"toolbox",
+		provide.YamlUnmarshal[toolbox.Toolbox])
+
 	log := log.New(os.Stdout, "", 0)
 	observer := display.NewObserver(project, log)
 

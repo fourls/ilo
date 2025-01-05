@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/fourls/ilo/internal/data"
+	"github.com/fourls/ilo/internal/data/toolbox"
 	"github.com/fourls/ilo/internal/exec"
 	"github.com/fourls/ilo/internal/ilofile"
 )
@@ -17,7 +18,7 @@ type scheduledFlow struct {
 type IloDaemon struct {
 	ticker        *time.Ticker
 	log           *slog.Logger
-	toolbox       data.Toolbox
+	toolbox       toolbox.Toolbox
 	flowSchedules []scheduledFlow
 }
 
